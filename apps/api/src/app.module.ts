@@ -4,6 +4,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from './database/database.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
     }),
     EventEmitterModule.forRoot(),
     DatabaseModule,
+    QueuesModule,
     AlertsModule,
     IncidentsModule,
   ],

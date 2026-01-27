@@ -1,8 +1,16 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, and, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
-import { incidents, alerts, incidentTimeline, Incident } from '../../database/schema';
+import {
+  incidents,
+  alerts,
+  incidentTimeline,
+  Incident,
+  services,
+  escalationLevels,
+} from '../../database/schema';
+import { EscalationQueueService } from '../../queues/escalation.queue';
 
 interface CreateIncidentParams {
   serviceId: number;
@@ -17,6 +25,8 @@ export class IncidentsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(forwardRef(() => EscalationQueueService))
+    private readonly escalationQueue: EscalationQueueService,
   ) {}
 
   /**
@@ -61,7 +71,50 @@ export class IncidentsService {
     this.logger.log(`Created incident #${newIncident.incidentNumber}`);
     this.eventEmitter.emit('incident.created', newIncident);
 
+    // Trigger escalation if service has an escalation policy
+    const service = await this.db.query.services.findFirst({
+      where: eq(services.id, params.serviceId),
+    });
+
+    if (service?.escalationPolicyId) {
+      await this.triggerEscalation(newIncident.id, service.escalationPolicyId);
+    }
+
     return newIncident;
+  }
+
+  /**
+   * Trigger escalation for an incident
+   */
+  private async triggerEscalation(
+    incidentId: number,
+    escalationPolicyId: number,
+  ): Promise<void> {
+    // Get the first escalation level
+    const firstLevel = await this.db.query.escalationLevels.findFirst({
+      where: and(
+        eq(escalationLevels.policyId, escalationPolicyId),
+        eq(escalationLevels.level, 1),
+      ),
+    });
+
+    if (!firstLevel) {
+      this.logger.warn(
+        `No escalation levels found for policy ${escalationPolicyId}`,
+      );
+      return;
+    }
+
+    await this.escalationQueue.scheduleEscalation(
+      incidentId,
+      escalationPolicyId,
+      1,
+      firstLevel.delayMinutes,
+    );
+
+    this.logger.log(
+      `Triggered escalation for incident ${incidentId} with policy ${escalationPolicyId}`,
+    );
   }
 
   /**
@@ -100,6 +153,9 @@ export class IncidentsService {
       description: `Incident acknowledged`,
       createdAt: new Date(),
     });
+
+    // Cancel pending escalations
+    await this.escalationQueue.cancelEscalation(incidentId);
 
     this.logger.log(`Incident #${incident.incidentNumber} acknowledged by user ${userId}`);
     this.eventEmitter.emit('incident.acknowledged', { incident: updated, userId });
@@ -143,6 +199,9 @@ export class IncidentsService {
       description: `Incident resolved`,
       createdAt: new Date(),
     });
+
+    // Cancel pending escalations
+    await this.escalationQueue.cancelEscalation(incidentId);
 
     this.logger.log(`Incident #${incident.incidentNumber} resolved by user ${userId}`);
     this.eventEmitter.emit('incident.resolved', { incident: updated, userId });
