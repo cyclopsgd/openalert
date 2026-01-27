@@ -365,6 +365,27 @@ export const alertsRelations = relations(alerts, ({ one }) => ({
   integration: one(integrations, { fields: [alerts.integrationId], references: [integrations.id] }),
 }));
 
+export const schedulesRelations = relations(schedules, ({ one, many }) => ({
+  team: one(teams, { fields: [schedules.teamId], references: [teams.id] }),
+  rotations: many(scheduleRotations),
+  overrides: many(scheduleOverrides),
+}));
+
+export const scheduleRotationsRelations = relations(scheduleRotations, ({ one, many }) => ({
+  schedule: one(schedules, { fields: [scheduleRotations.scheduleId], references: [schedules.id] }),
+  members: many(rotationMembers),
+}));
+
+export const rotationMembersRelations = relations(rotationMembers, ({ one }) => ({
+  rotation: one(scheduleRotations, { fields: [rotationMembers.rotationId], references: [scheduleRotations.id] }),
+  user: one(users, { fields: [rotationMembers.userId], references: [users.id] }),
+}));
+
+export const scheduleOverridesRelations = relations(scheduleOverrides, ({ one }) => ({
+  schedule: one(schedules, { fields: [scheduleOverrides.scheduleId], references: [schedules.id] }),
+  user: one(users, { fields: [scheduleOverrides.userId], references: [users.id] }),
+}));
+
 // Type exports
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
