@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { StatusPagesModule } from './modules/status-pages/status-pages.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WebSocketModule } from './websocket/websocket.module';
     IncidentsModule,
     SchedulesModule,
     WebSocketModule,
+    StatusPagesModule,
   ],
   controllers: [],
   providers: [],

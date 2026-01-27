@@ -325,12 +325,81 @@ export const incidentTimeline = pgTable(
   }),
 );
 
+// Status Pages (Public-facing incident status)
+export const statusPages = pgTable('status_pages', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  teamId: integer('team_id')
+    .notNull()
+    .references(() => teams.id),
+  description: text('description'),
+  isPublic: boolean('is_public').default(true).notNull(),
+  customDomain: varchar('custom_domain', { length: 255 }),
+  logoUrl: varchar('logo_url', { length: 500 }),
+  headerHtml: text('header_html'),
+  footerHtml: text('footer_html'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Status Page Components
+export const statusPageComponents = pgTable('status_page_components', {
+  id: serial('id').primaryKey(),
+  statusPageId: integer('status_page_id')
+    .notNull()
+    .references(() => statusPages.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  status: varchar('status', { length: 50 }).default('operational').notNull(), // operational, degraded_performance, partial_outage, major_outage, under_maintenance
+  position: integer('position').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Status Page Incidents
+export const statusPageIncidents = pgTable('status_page_incidents', {
+  id: serial('id').primaryKey(),
+  statusPageId: integer('status_page_id')
+    .notNull()
+    .references(() => statusPages.id, { onDelete: 'cascade' }),
+  internalIncidentId: integer('internal_incident_id').references(() => incidents.id),
+  title: varchar('title', { length: 500 }).notNull(),
+  status: varchar('status', { length: 50 }).default('investigating').notNull(), // investigating, identified, monitoring, resolved
+  impact: varchar('impact', { length: 50 }).default('minor').notNull(), // minor, major, critical
+  componentIds: jsonb('component_ids').$type<number[]>(), // Affected components
+  scheduledFor: timestamp('scheduled_for'), // For scheduled maintenance
+  scheduledUntil: timestamp('scheduled_until'),
+  resolvedAt: timestamp('resolved_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Status Page Incident Updates
+export const statusPageUpdates = pgTable(
+  'status_page_updates',
+  {
+    id: serial('id').primaryKey(),
+    incidentId: integer('incident_id')
+      .notNull()
+      .references(() => statusPageIncidents.id, { onDelete: 'cascade' }),
+    status: varchar('status', { length: 50 }).notNull(),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    incidentIdx: index('status_updates_incident_idx').on(table.incidentId),
+    createdAtIdx: index('status_updates_created_at_idx').on(table.createdAt),
+  }),
+);
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   members: many(teamMembers),
   services: many(services),
   schedules: many(schedules),
   escalationPolicies: many(escalationPolicies),
+  statusPages: many(statusPages),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -386,6 +455,26 @@ export const scheduleOverridesRelations = relations(scheduleOverrides, ({ one })
   user: one(users, { fields: [scheduleOverrides.userId], references: [users.id] }),
 }));
 
+export const statusPagesRelations = relations(statusPages, ({ one, many }) => ({
+  team: one(teams, { fields: [statusPages.teamId], references: [teams.id] }),
+  components: many(statusPageComponents),
+  incidents: many(statusPageIncidents),
+}));
+
+export const statusPageComponentsRelations = relations(statusPageComponents, ({ one }) => ({
+  statusPage: one(statusPages, { fields: [statusPageComponents.statusPageId], references: [statusPages.id] }),
+}));
+
+export const statusPageIncidentsRelations = relations(statusPageIncidents, ({ one, many }) => ({
+  statusPage: one(statusPages, { fields: [statusPageIncidents.statusPageId], references: [statusPages.id] }),
+  internalIncident: one(incidents, { fields: [statusPageIncidents.internalIncidentId], references: [incidents.id] }),
+  updates: many(statusPageUpdates),
+}));
+
+export const statusPageUpdatesRelations = relations(statusPageUpdates, ({ one }) => ({
+  incident: one(statusPageIncidents, { fields: [statusPageUpdates.incidentId], references: [statusPageIncidents.id] }),
+}));
+
 // Type exports
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
@@ -399,3 +488,11 @@ export type Incident = typeof incidents.$inferSelect;
 export type NewIncident = typeof incidents.$inferInsert;
 export type EscalationPolicy = typeof escalationPolicies.$inferSelect;
 export type Schedule = typeof schedules.$inferSelect;
+export type StatusPage = typeof statusPages.$inferSelect;
+export type NewStatusPage = typeof statusPages.$inferInsert;
+export type StatusPageComponent = typeof statusPageComponents.$inferSelect;
+export type NewStatusPageComponent = typeof statusPageComponents.$inferInsert;
+export type StatusPageIncident = typeof statusPageIncidents.$inferSelect;
+export type NewStatusPageIncident = typeof statusPageIncidents.$inferInsert;
+export type StatusPageUpdate = typeof statusPageUpdates.$inferSelect;
+export type NewStatusPageUpdate = typeof statusPageUpdates.$inferInsert;
