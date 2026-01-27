@@ -1,0 +1,37 @@
+{
+  "receiver": "openalert",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighMemoryUsage",
+        "severity": "critical",
+        "instance": "prod-api-01",
+        "job": "api-server",
+        "environment": "production"
+      },
+      "annotations": {
+        "summary": "High memory usage detected",
+        "description": "Memory usage is above 90% on prod-api-01",
+        "runbook_url": "https://wiki.example.com/runbooks/high-memory"
+      },
+      "startsAt": "2026-01-27T20:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://prometheus:9090/graph?g0.expr=memory_usage&g0.tab=1"
+    }
+  ],
+  "groupLabels": {
+    "alertname": "HighMemoryUsage"
+  },
+  "commonLabels": {
+    "alertname": "HighMemoryUsage",
+    "severity": "critical"
+  },
+  "commonAnnotations": {
+    "summary": "High memory usage detected"
+  },
+  "externalURL": "http://alertmanager:9093",
+  "version": "4",
+  "groupKey": "{}:{alertname=\"HighMemoryUsage\"}"
+}

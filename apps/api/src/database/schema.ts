@@ -356,6 +356,10 @@ export const incidentsRelations = relations(incidents, ({ one, many }) => ({
   notifications: many(notificationLogs),
 }));
 
+export const integrationsRelations = relations(integrations, ({ one }) => ({
+  service: one(services, { fields: [integrations.serviceId], references: [services.id] }),
+}));
+
 export const alertsRelations = relations(alerts, ({ one }) => ({
   incident: one(incidents, { fields: [alerts.incidentId], references: [incidents.id] }),
   integration: one(integrations, { fields: [alerts.integrationId], references: [integrations.id] }),

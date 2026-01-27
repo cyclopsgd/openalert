@@ -1,0 +1,6 @@
+{
+  "title": "Test Alert",
+  "severity": "critical",
+  "status": "firing",
+  "description": "This is a test alert"
+}
