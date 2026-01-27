@@ -1,0 +1,31 @@
+{
+  "model": "claude-opus-4-5-20250514",
+  "permissions": {
+    "allowedCommands": [
+      "npm",
+      "npx", 
+      "node",
+      "docker",
+      "docker-compose",
+      "git"
+    ],
+    "allowedPaths": [
+      "C:\\Projects\\openalert"
+    ],
+    "blockedPaths": [
+      "C:\\Windows",
+      "C:\\Program Files"
+    ]
+  },
+  "behavior": {
+    "autoApprove": [
+      "read",
+      "write", 
+      "execute"
+    ],
+    "requireApproval": [
+      "delete",
+      "network"
+    ]
+  }
+}
