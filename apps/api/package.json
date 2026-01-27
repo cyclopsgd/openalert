@@ -30,6 +30,7 @@
     "@nestjs/platform-fastify": "^10.3.0",
     "@nestjs/platform-socket.io": "^10.3.0",
     "@nestjs/swagger": "^7.2.0",
+    "@nestjs/terminus": "^11.0.0",
     "@nestjs/websockets": "^10.3.0",
     "@socket.io/redis-adapter": "^8.2.1",
     "bullmq": "^5.1.0",

@@ -10,6 +10,7 @@ import { UsersModule } from './modules/users/users.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { StatusPagesModule } from './modules/status-pages/status-pages.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { StatusPagesModule } from './modules/status-pages/status-pages.module';
     SchedulesModule,
     WebSocketModule,
     StatusPagesModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
