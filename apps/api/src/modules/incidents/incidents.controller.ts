@@ -1,9 +1,13 @@
-import { Controller, Get, Param, Patch, Body, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Param, Patch, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('incidents')
 @Controller('incidents')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
 
@@ -31,13 +35,13 @@ export class IncidentsController {
 
   @Patch(':id/acknowledge')
   @ApiOperation({ summary: 'Acknowledge an incident' })
-  async acknowledge(@Param('id') id: string, @Body('userId') userId: number) {
-    return this.incidentsService.acknowledge(Number(id), userId);
+  async acknowledge(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    return this.incidentsService.acknowledge(Number(id), user.id);
   }
 
   @Patch(':id/resolve')
   @ApiOperation({ summary: 'Resolve an incident' })
-  async resolve(@Param('id') id: string, @Body('userId') userId: number) {
-    return this.incidentsService.resolve(Number(id), userId);
+  async resolve(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    return this.incidentsService.resolve(Number(id), user.id);
   }
 }

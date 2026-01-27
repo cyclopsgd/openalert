@@ -5,6 +5,8 @@ import { DatabaseModule } from './database/database.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { QueuesModule } from './queues/queues.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { QueuesModule } from './queues/queues.module';
     }),
     EventEmitterModule.forRoot(),
     DatabaseModule,
+    AuthModule,
+    UsersModule,
     QueuesModule,
     AlertsModule,
     IncidentsModule,

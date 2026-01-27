@@ -9,10 +9,13 @@ import {
   Get,
   Query,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AlertsService } from './alerts.service';
 import { WebhookTransformerService } from './webhook-transformer.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('webhooks')
 @Controller('webhooks')
@@ -114,6 +117,8 @@ export class AlertsController {
 
 @ApiTags('alerts')
 @Controller('alerts')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class AlertsManagementController {
   constructor(private readonly alertsService: AlertsService) {}
 
@@ -141,8 +146,8 @@ export class AlertsManagementController {
 
   @Patch(':id/acknowledge')
   @ApiOperation({ summary: 'Acknowledge an alert' })
-  async acknowledge(@Param('id') id: string, @Body('userId') userId: number) {
-    return this.alertsService.acknowledge(Number(id), userId);
+  async acknowledge(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    return this.alertsService.acknowledge(Number(id), user.id);
   }
 
   @Patch(':id/resolve')
