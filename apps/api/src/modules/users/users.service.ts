@@ -129,4 +129,22 @@ export class UsersService {
       .offset(params.offset || 0)
       .orderBy(users.createdAt);
   }
+
+  /**
+   * Get user's team memberships
+   */
+  async getUserTeams(userId: number) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+      with: {
+        teamMemberships: {
+          with: {
+            team: true,
+          },
+        },
+      },
+    });
+
+    return user?.teamMemberships || [];
+  }
 }

@@ -8,6 +8,7 @@ import { QueuesModule } from './queues/queues.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SchedulesModule } from './modules/schedules/schedules.module';
     AlertsModule,
     IncidentsModule,
     SchedulesModule,
+    WebSocketModule,
   ],
   controllers: [],
   providers: [],
