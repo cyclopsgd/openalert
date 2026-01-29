@@ -331,6 +331,13 @@ npm run test:cov
 3. Calculate current on-call based on rotation type
 4. Return on-call user with context
 
+## Documentation
+
+For comprehensive backend documentation:
+
+- **[BACKEND-API.md](docs/BACKEND-API.md)** - Complete API reference with request/response examples
+- **[BACKEND-DEEP-DIVE.md](docs/BACKEND-DEEP-DIVE.md)** - In-depth architecture, modules, database schema, and implementation details
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details
