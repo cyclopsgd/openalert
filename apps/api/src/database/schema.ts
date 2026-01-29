@@ -475,6 +475,35 @@ export const statusPageUpdatesRelations = relations(statusPageUpdates, ({ one })
   incident: one(statusPageIncidents, { fields: [statusPageUpdates.incidentId], references: [statusPageIncidents.id] }),
 }));
 
+export const incidentTimelineRelations = relations(incidentTimeline, ({ one }) => ({
+  incident: one(incidents, { fields: [incidentTimeline.incidentId], references: [incidents.id] }),
+  user: one(users, { fields: [incidentTimeline.userId], references: [users.id] }),
+}));
+
+export const notificationLogsRelations = relations(notificationLogs, ({ one }) => ({
+  incident: one(incidents, { fields: [notificationLogs.incidentId], references: [incidents.id] }),
+  user: one(users, { fields: [notificationLogs.userId], references: [users.id] }),
+}));
+
+export const escalationPoliciesRelations = relations(escalationPolicies, ({ one, many }) => ({
+  team: one(teams, { fields: [escalationPolicies.teamId], references: [teams.id] }),
+  levels: many(escalationLevels),
+}));
+
+export const escalationLevelsRelations = relations(escalationLevels, ({ one, many }) => ({
+  policy: one(escalationPolicies, { fields: [escalationLevels.policyId], references: [escalationPolicies.id] }),
+  targets: many(escalationTargets),
+}));
+
+export const escalationTargetsRelations = relations(escalationTargets, ({ one }) => ({
+  level: one(escalationLevels, { fields: [escalationTargets.levelId], references: [escalationLevels.id] }),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, { fields: [teamMembers.teamId], references: [teams.id] }),
+  user: one(users, { fields: [teamMembers.userId], references: [users.id] }),
+}));
+
 // Type exports
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
