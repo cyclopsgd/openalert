@@ -23,7 +23,8 @@
     "lint:fix": "npm run lint:fix -w @openalert/api",
     "db:generate": "npm run db:generate -w @openalert/api",
     "db:push": "npm run db:push -w @openalert/api",
-    "db:studio": "npm run db:studio -w @openalert/api"
+    "db:studio": "npm run db:studio -w @openalert/api",
+    "db:seed:test": "npm run db:seed:test -w @openalert/api"
   },
   "engines": {
     "node": ">=20.0.0",
