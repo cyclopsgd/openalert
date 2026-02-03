@@ -294,6 +294,24 @@ export const scheduleOverrides = pgTable('schedule_overrides', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// User Notification Preferences
+export const userNotificationPreferences = pgTable('user_notification_preferences', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  emailEnabled: boolean('email_enabled').default(true).notNull(),
+  smsEnabled: boolean('sms_enabled').default(false).notNull(),
+  pushEnabled: boolean('push_enabled').default(true).notNull(),
+  slackEnabled: boolean('slack_enabled').default(false).notNull(),
+  quietHoursStart: varchar('quiet_hours_start', { length: 10 }), // HH:MM format
+  quietHoursEnd: varchar('quiet_hours_end', { length: 10 }), // HH:MM format
+  notificationDelay: integer('notification_delay').default(0).notNull(), // Minutes
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Notification Log
 export const notificationLogs = pgTable(
   'notification_logs',
@@ -415,9 +433,13 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   statusPages: many(statusPages),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   teamMemberships: many(teamMembers),
   incidents: many(incidents, { relationName: 'assignee' }),
+  notificationPreferences: one(userNotificationPreferences, {
+    fields: [users.id],
+    references: [userNotificationPreferences.userId],
+  }),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -559,6 +581,30 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   team: one(teams, { fields: [auditLogs.teamId], references: [teams.id] }),
 }));
 
+// Webhook Logs (for debugging integrations)
+export const webhookLogs = pgTable(
+  'webhook_logs',
+  {
+    id: serial('id').primaryKey(),
+    integrationKey: varchar('integration_key', { length: 64 }).notNull(),
+    method: varchar('method', { length: 10 }).notNull(),
+    path: varchar('path', { length: 500 }).notNull(),
+    statusCode: integer('status_code').notNull(),
+    requestHeaders: jsonb('request_headers').$type<Record<string, string>>(),
+    requestBody: jsonb('request_body').$type<Record<string, unknown>>(),
+    responseBody: jsonb('response_body').$type<Record<string, unknown>>(),
+    userAgent: text('user_agent'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    processingTimeMs: integer('processing_time_ms'),
+    error: text('error'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    integrationKeyIdx: index('webhook_logs_integration_key_idx').on(table.integrationKey),
+    createdAtIdx: index('webhook_logs_created_at_idx').on(table.createdAt),
+  }),
+);
+
 // Type exports
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type NewSystemSetting = typeof systemSettings.$inferInsert;
@@ -582,3 +628,7 @@ export type StatusPageIncident = typeof statusPageIncidents.$inferSelect;
 export type NewStatusPageIncident = typeof statusPageIncidents.$inferInsert;
 export type StatusPageUpdate = typeof statusPageUpdates.$inferSelect;
 export type NewStatusPageUpdate = typeof statusPageUpdates.$inferInsert;
+export type Integration = typeof integrations.$inferSelect;
+export type NewIntegration = typeof integrations.$inferInsert;
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type NewWebhookLog = typeof webhookLogs.$inferInsert;

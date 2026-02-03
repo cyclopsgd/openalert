@@ -21,7 +21,10 @@ export class EscalationLevelDto {
 }
 
 export class EscalationTargetDto {
-  @ApiProperty({ description: 'Target type: user, schedule, or team', enum: ['user', 'schedule', 'team'] })
+  @ApiProperty({
+    description: 'Target type: user, schedule, or team',
+    enum: ['user', 'schedule', 'team'],
+  })
   @IsString()
   targetType: 'user' | 'schedule' | 'team';
 
@@ -39,7 +42,11 @@ export class CreateEscalationPolicyDto {
   @IsInt()
   teamId: number;
 
-  @ApiProperty({ description: 'Number of times to repeat the escalation', example: 3, required: false })
+  @ApiProperty({
+    description: 'Number of times to repeat the escalation',
+    example: 3,
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

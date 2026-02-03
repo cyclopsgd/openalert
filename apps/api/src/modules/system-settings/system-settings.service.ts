@@ -143,4 +143,89 @@ export class SystemSettingsService {
 
     return this.getSSOConfig();
   }
+
+  /**
+   * Get general settings configuration
+   */
+  async getGeneralSettings() {
+    const [
+      organizationName,
+      organizationLogoUrl,
+      defaultTimezone,
+      dateTimeFormat,
+      language,
+      companyWebsite,
+      supportEmail,
+    ] = await Promise.all([
+      this.getValue('general.organization_name', 'OpenAlert'),
+      this.getValue('general.organization_logo_url'),
+      this.getValue('general.default_timezone', 'UTC'),
+      this.getValue('general.datetime_format', 'YYYY-MM-DD HH:mm:ss'),
+      this.getValue('general.language', 'en'),
+      this.getValue('general.company_website'),
+      this.getValue('general.support_email'),
+    ]);
+
+    return {
+      organizationName,
+      organizationLogoUrl,
+      defaultTimezone,
+      dateTimeFormat,
+      language,
+      companyWebsite,
+      supportEmail,
+    };
+  }
+
+  /**
+   * Update general settings
+   */
+  async updateGeneralSettings(config: {
+    organizationName?: string;
+    organizationLogoUrl?: string;
+    defaultTimezone?: string;
+    dateTimeFormat?: string;
+    language?: string;
+    companyWebsite?: string;
+    supportEmail?: string;
+  }) {
+    const updates: Promise<SystemSetting>[] = [];
+
+    if (config.organizationName !== undefined) {
+      updates.push(
+        this.set('general.organization_name', config.organizationName, 'Organization Name'),
+      );
+    }
+    if (config.organizationLogoUrl !== undefined) {
+      updates.push(
+        this.set(
+          'general.organization_logo_url',
+          config.organizationLogoUrl,
+          'Organization Logo URL',
+        ),
+      );
+    }
+    if (config.defaultTimezone !== undefined) {
+      updates.push(
+        this.set('general.default_timezone', config.defaultTimezone, 'Default Timezone'),
+      );
+    }
+    if (config.dateTimeFormat !== undefined) {
+      updates.push(this.set('general.datetime_format', config.dateTimeFormat, 'Date/Time Format'));
+    }
+    if (config.language !== undefined) {
+      updates.push(this.set('general.language', config.language, 'Language'));
+    }
+    if (config.companyWebsite !== undefined) {
+      updates.push(this.set('general.company_website', config.companyWebsite, 'Company Website'));
+    }
+    if (config.supportEmail !== undefined) {
+      updates.push(this.set('general.support_email', config.supportEmail, 'Support Email'));
+    }
+
+    await Promise.all(updates);
+    this.logger.log('Updated general settings');
+
+    return this.getGeneralSettings();
+  }
 }

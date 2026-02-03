@@ -1,11 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
-import {
-  escalationPolicies,
-  escalationLevels,
-  escalationTargets,
-} from '../../database/schema';
+import { escalationPolicies, escalationLevels, escalationTargets } from '../../database/schema';
 import { CreateEscalationPolicyDto } from './dto/create-escalation-policy.dto';
 import { UpdateEscalationPolicyDto } from './dto/update-escalation-policy.dto';
 
@@ -128,7 +124,8 @@ export class EscalationPoliciesService {
       const updateData: any = {};
       if (data.name) updateData.name = data.name;
       if (data.repeatCount !== undefined) updateData.repeatCount = data.repeatCount;
-      if (data.repeatDelayMinutes !== undefined) updateData.repeatDelayMinutes = data.repeatDelayMinutes;
+      if (data.repeatDelayMinutes !== undefined)
+        updateData.repeatDelayMinutes = data.repeatDelayMinutes;
       updateData.updatedAt = new Date();
 
       await this.db.db

@@ -31,7 +31,7 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: () => ({
         throttlers: [
           {
             name: 'default',

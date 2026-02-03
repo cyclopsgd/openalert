@@ -15,6 +15,20 @@
       "when": 1770144297644,
       "tag": "0001_misty_spencer_smythe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770153181165,
+      "tag": "0002_panoramic_butterfly",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1770153441458,
+      "tag": "0003_yielding_molecule_man",
+      "breakpoints": true
     }
   ]
 }

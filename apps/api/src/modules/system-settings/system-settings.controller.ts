@@ -4,6 +4,7 @@ import { SystemSettingsService } from './system-settings.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { UpdateSSOConfigDto } from './dto/update-sso-config.dto';
+import { UpdateGeneralSettingsDto } from './dto/update-general-settings.dto';
 
 @ApiTags('system-settings')
 @Controller('system-settings')
@@ -29,6 +30,19 @@ export class SystemSettingsController {
   @ApiOperation({ summary: 'Update SSO configuration' })
   async updateSSOConfig(@Body() dto: UpdateSSOConfigDto) {
     return this.settingsService.updateSSOConfig(dto);
+  }
+
+  @Get('general')
+  @ApiOperation({ summary: 'Get general settings' })
+  async getGeneralSettings() {
+    return this.settingsService.getGeneralSettings();
+  }
+
+  @Put('general')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Update general settings' })
+  async updateGeneralSettings(@Body() dto: UpdateGeneralSettingsDto) {
+    return this.settingsService.updateGeneralSettings(dto);
   }
 
   @Get(':key')
