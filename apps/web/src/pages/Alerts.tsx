@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SeverityBadge, AlertStatusBadge } from '@/components/ui/Badge'
@@ -7,15 +8,25 @@ import { useAlerts, useAcknowledgeAlert, useResolveAlert } from '@/hooks/useAler
 import { formatTimeAgo } from '@/lib/utils/format'
 
 export function Alerts() {
+  const navigate = useNavigate()
   const { data: alerts, isLoading } = useAlerts()
   const acknowledgeMutation = useAcknowledgeAlert()
   const resolveMutation = useResolveAlert()
 
-  const handleAcknowledge = (alertId: number) => {
+  const handleAlertClick = (alert: typeof alerts[0]) => {
+    if (alert.incidentId) {
+      navigate(`/incidents/${alert.incidentId}`)
+    }
+    // If no incident, do nothing (could add a modal/toast in the future)
+  }
+
+  const handleAcknowledge = (e: React.MouseEvent, alertId: number) => {
+    e.stopPropagation()
     acknowledgeMutation.mutate(alertId)
   }
 
-  const handleResolve = (alertId: number) => {
+  const handleResolve = (e: React.MouseEvent, alertId: number) => {
+    e.stopPropagation()
     resolveMutation.mutate(alertId)
   }
 
@@ -46,7 +57,10 @@ export function Alerts() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="p-4 hover:bg-dark-750 transition-all">
+              <Card
+                className="p-4 hover:bg-dark-750 transition-all cursor-pointer"
+                onClick={() => handleAlertClick(alert)}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
@@ -79,7 +93,7 @@ export function Alerts() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => handleAcknowledge(alert.id)}
+                          onClick={(e) => handleAcknowledge(e, alert.id)}
                           isLoading={acknowledgeMutation.isPending}
                         >
                           Acknowledge
@@ -87,7 +101,7 @@ export function Alerts() {
                         <Button
                           size="sm"
                           variant="success"
-                          onClick={() => handleResolve(alert.id)}
+                          onClick={(e) => handleResolve(e, alert.id)}
                           isLoading={resolveMutation.isPending}
                         >
                           Resolve
