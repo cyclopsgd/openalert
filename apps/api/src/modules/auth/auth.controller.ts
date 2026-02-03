@@ -50,9 +50,17 @@ export class AuthController {
         }
       }
 
-      // In production, redirect to frontend with token in URL fragment
-      // Frontend will extract token and store it
-      res.redirect(`${redirectUrl}?token=${result.accessToken}`);
+      // Set JWT in HTTP-only cookie (secure, not accessible to JavaScript)
+      res.cookie('authToken', result.accessToken, {
+        httpOnly: true,
+        secure: this.config.get('NODE_ENV') === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      });
+
+      // Redirect to frontend without token in URL
+      res.redirect(redirectUrl);
     } catch (error) {
       res.status(401).json({ error: 'Authentication failed' });
     }
@@ -68,9 +76,17 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Logout (client-side token removal)' })
-  async logout() {
-    return { message: 'Logged out successfully' };
+  @ApiOperation({ summary: 'Logout and clear auth cookie' })
+  async logout(@Res() res: Response) {
+    // Clear the auth cookie
+    res.clearCookie('authToken', {
+      httpOnly: true,
+      secure: this.config.get('NODE_ENV') === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return res.json({ message: 'Logged out successfully' });
   }
 
   @Get('dev-token/:userId')
