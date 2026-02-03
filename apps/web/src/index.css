@@ -113,6 +113,11 @@
     @apply border-gray-100;
   }
 
+  /* Light mode for header */
+  :root:not(.dark) header {
+    @apply bg-white/95 border-gray-200;
+  }
+
   /* Light mode hover states */
   :root:not(.dark) .hover\:bg-dark-800:hover {
     @apply bg-gray-100;

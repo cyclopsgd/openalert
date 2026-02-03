@@ -16,7 +16,7 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 border-b border-dark-700 bg-dark-900/95 backdrop-blur-sm sticky top-0 z-30 dark:bg-dark-900/95">
+    <header className="h-16 border-b border-dark-700 bg-dark-900/95 backdrop-blur-sm sticky top-0 z-30">
       <div className="h-full px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button
