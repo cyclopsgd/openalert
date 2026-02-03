@@ -1,8 +1,12 @@
 # OpenAlert Backend - Deep Dive Documentation
 
 **Version:** 0.1.0
-**Last Updated:** January 29, 2026
+**Last Updated:** February 3, 2026
 **Architecture:** NestJS with PostgreSQL and Redis
+
+**Recent Updates:**
+- **2026-02-03**: JWT token security (HTTP-only cookies)
+- **2026-02-03**: Team-based authorization middleware implemented
 
 ---
 
@@ -2964,36 +2968,101 @@ With this:
     │                       │                  │
     │                       │ 9. Generate JWT  │
     │                       │                  │
-    │ 10. Redirect with JWT                    │
+    │ 10. Set JWT in HTTP-only cookie          │
+    │    and redirect to frontend              │
     │◄─────────────────────                    │
     │                                           │
-    │ 11. Store JWT, make API calls            │
+    │ 11. Make API calls (cookie auto-sent)   │
     │                                           │
 ```
 
+### JWT Token Security
+
+**Token Storage**: HTTP-only cookies (as of 2026-02-03) ✓
+
+**Security Improvements**:
+- JWT stored in HTTP-only cookie (not accessible to JavaScript)
+- Secure flag enabled in production (HTTPS only)
+- SameSite=lax to prevent CSRF attacks
+- 7-day expiration
+- Cookie secret configurable via environment
+
+**Token Extraction**:
+The JWT strategy supports both authentication methods:
+1. **HTTP-only cookie** (`authToken`) - For browser-based requests after OAuth
+2. **Authorization header** (`Bearer <token>`) - For API clients and testing
+
+**Implementation** (`apps/api/src/modules/auth/auth.controller.ts`):
+```typescript
+// Set cookie on OAuth callback
+res.cookie('authToken', result.accessToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: '/',
+});
+res.redirect(redirectUrl); // No token in URL
+```
+
+**Previous Vulnerability** (FIXED):
+- ❌ Token was passed in URL query parameter (`?token=...`)
+- ❌ Visible in browser history, server logs, referrer headers
+- ❌ Risk of token leakage
+
 ### Authorization Strategy
 
-**Role-Based Access Control (RBAC)** - prepared but not fully implemented
+**Role-Based Access Control (RBAC)** - IMPLEMENTED ✓
 
 **Roles** (in `team_members.role`):
 - `owner` - Full control over team
 - `admin` - Manage team resources
 - `member` - Basic access
 
-**Future Guards**:
+**Implementation**:
+
+**TeamMemberGuard** (`src/common/guards/team-member.guard.ts`):
+- Verifies user is a member of the team that owns the requested resource
+- Resolves team ownership through resource relationships:
+  - `incident` → `service` → `team`
+  - `schedule` → `team`
+  - `status-page` → `team`
+  - `escalation-policy` → `team`
+  - `service` → `team`
+- Validates role requirements if specified
+- Attaches `teamId` and `userRole` to request for controllers
+
+**Decorators**:
+
 ```typescript
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'owner')
-@Delete('services/:id')
-async deleteService() {
-  // Only admins and owners can delete services
+// Specify resource type for authorization
+@TeamResource('incident')
+
+// Require specific roles (optional)
+@RequireTeamRoles(['admin', 'owner'])
+```
+
+**Usage Example**:
+```typescript
+@UseGuards(JwtAuthGuard, TeamMemberGuard)
+@TeamResource('schedule')
+@RequireTeamRoles(['admin', 'owner'])
+@Delete('schedules/:id')
+async deleteSchedule(@Param('id') id: string) {
+  // Only team admins/owners can delete schedules
+  // User membership already verified by guard
 }
 ```
 
-**Current State**:
-- All authenticated users have full access
-- Team isolation via data filtering (not enforced at route level)
-- Ready for RBAC implementation
+**Protected Controllers**:
+- `incidents.controller.ts` - All resource-specific endpoints
+- `schedules.controller.ts` - CRUD operations with role restrictions
+- `status-pages.controller.ts` - Management endpoints (public routes unchanged)
+
+**Security Impact**:
+- Enforces multi-tenant isolation at route level
+- Prevents unauthorized access to team resources
+- Role-based restrictions for sensitive operations
 
 ### Security Best Practices
 
