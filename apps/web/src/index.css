@@ -93,7 +93,7 @@
   }
 
   :root:not(.dark) .bg-dark-750 {
-    @apply bg-gray-150;
+    @apply bg-gray-100;
   }
 
   :root:not(.dark) .bg-dark-600 {
