@@ -46,7 +46,7 @@ export function IncidentDetail() {
   const navigate = useNavigate()
   const incidentId = parseInt(id || '0', 10)
 
-  const { data: incident, isLoading } = useIncident(incidentId)
+  const { data: incident, isLoading, error } = useIncident(incidentId)
   const { subscribeToIncident, unsubscribeFromIncident } = useRealtime()
 
   const acknowledgeMutation = useAcknowledgeIncident()
@@ -77,12 +77,49 @@ export function IncidentDetail() {
     )
   }
 
+  // Handle errors with specific messages
+  if (error) {
+    const errorResponse = error as { response?: { status?: number; data?: { message?: string } } }
+    const statusCode = errorResponse?.response?.status || 500
+    const errorMessage = errorResponse?.response?.data?.message || 'An error occurred'
+
+    let title = 'Error Loading Incident'
+    let message = errorMessage
+    let suggestion = ''
+
+    if (statusCode === 403) {
+      title = 'Access Denied'
+      message = 'You do not have permission to view this incident'
+      suggestion = 'You may not be a member of the team that owns this incident. Please contact your team administrator.'
+    } else if (statusCode === 404) {
+      title = 'Incident Not Found'
+      message = 'The incident you are looking for does not exist'
+      suggestion = 'The incident may have been deleted or the link may be incorrect.'
+    }
+
+    return (
+      <div className="text-center py-12 max-w-md mx-auto">
+        <AlertTriangle className="h-16 w-16 text-status-critical mx-auto mb-4" />
+        <h2 className="text-2xl font-heading font-bold text-dark-50 mb-2">{title}</h2>
+        <p className="text-dark-300 mb-2">{message}</p>
+        {suggestion && (
+          <p className="text-sm text-dark-400 mb-6">{suggestion}</p>
+        )}
+        <Button onClick={() => navigate('/incidents')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to Incidents
+        </Button>
+      </div>
+    )
+  }
+
   if (!incident) {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="h-12 w-12 text-dark-600 mx-auto mb-3" />
         <p className="text-dark-400">Incident not found</p>
         <Button className="mt-4" onClick={() => navigate('/incidents')}>
+          <ArrowLeft className="h-4 w-4" />
           Back to Incidents
         </Button>
       </div>
