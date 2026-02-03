@@ -1,11 +1,19 @@
-import { Menu, Moon, Sun, Bell } from 'lucide-react'
+import { Menu, Moon, Sun, Bell, User, Settings, LogOut } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
+import { Dropdown, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/Dropdown'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 
 export function Header() {
+  const navigate = useNavigate()
   const { theme, toggleTheme, toggleSidebar } = useUIStore()
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <header className="h-16 border-b border-dark-700 bg-dark-900/95 backdrop-blur-sm sticky top-0 z-30">
@@ -42,13 +50,53 @@ export function Header() {
             <Bell className="h-5 w-5" />
           </Button>
 
-          <div className="ml-2 flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center">
-              <span className="text-xs font-semibold text-white">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            </div>
-          </div>
+          <Dropdown
+            trigger={
+              <div className="ml-2 flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center">
+                  <span className="text-xs font-semibold text-white">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+              </div>
+            }
+            align="right"
+          >
+            <DropdownMenu>
+              <div className="px-4 py-3 border-b border-dark-700">
+                <p className="text-sm font-medium text-dark-50">
+                  {user?.name || 'User'}
+                </p>
+                <p className="text-xs text-dark-400 mt-0.5">
+                  {user?.email || ''}
+                </p>
+              </div>
+
+              <DropdownItem
+                icon={<User />}
+                onClick={() => navigate('/profile')}
+              >
+                Profile
+              </DropdownItem>
+
+              <DropdownItem
+                icon={<Settings />}
+                onClick={() => navigate('/settings')}
+              >
+                Settings
+              </DropdownItem>
+
+              <DropdownDivider />
+
+              <DropdownItem
+                icon={<LogOut />}
+                onClick={handleLogout}
+                variant="danger"
+              >
+                Logout
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </div>
       </div>
     </header>
