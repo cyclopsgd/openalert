@@ -4,11 +4,15 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UseGuards, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import { WsJwtGuard } from '../common/guards/ws-jwt.guard';
 import { OnEvent } from '@nestjs/event-emitter';
 
@@ -21,11 +25,43 @@ interface AuthenticatedSocket extends Socket {
   cors: { origin: '*', credentials: true },
   namespace: 'incidents',
 })
-export class IncidentsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class IncidentsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(IncidentsGateway.name);
 
   @WebSocketServer()
   server: Server;
+
+  constructor(private readonly config: ConfigService) {}
+
+  /**
+   * Configure Redis adapter for horizontal scaling
+   * This allows multiple server instances to share WebSocket state
+   */
+  async afterInit(server: Server) {
+    const redisUrl = this.config.get<string>('REDIS_URL', 'redis://localhost:6379');
+
+    try {
+      // Create Redis clients for pub/sub
+      const pubClient = createClient({ url: redisUrl });
+      const subClient = pubClient.duplicate();
+
+      // Handle connection errors
+      pubClient.on('error', (err) => this.logger.error('Redis Pub Client Error', err));
+      subClient.on('error', (err) => this.logger.error('Redis Sub Client Error', err));
+
+      // Connect both clients
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+
+      // Configure Socket.IO to use Redis adapter
+      server.adapter(createAdapter(pubClient, subClient));
+
+      this.logger.log('✅ Redis adapter configured for Socket.IO horizontal scaling');
+      this.logger.log(`   Connected to: ${redisUrl}`);
+    } catch (error) {
+      this.logger.error('❌ Failed to configure Redis adapter', error);
+      this.logger.warn('⚠️  WebSocket will run in single-instance mode (no horizontal scaling)');
+    }
+  }
 
   async handleConnection(client: AuthenticatedSocket) {
     this.logger.log(`Client connected: ${client.id}`);
