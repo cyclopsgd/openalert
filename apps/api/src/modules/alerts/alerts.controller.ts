@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AlertsService } from './alerts.service';
 import { WebhookTransformerService } from './webhook-transformer.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -19,6 +20,7 @@ import { CurrentUser, CurrentUserData } from '../../common/decorators/current-us
 
 @ApiTags('webhooks')
 @Controller('webhooks')
+@Throttle({ default: { ttl: 60000, limit: 100 } }) // 100 webhooks per minute per integration key
 export class AlertsController {
   private readonly logger = new Logger(AlertsController.name);
 

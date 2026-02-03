@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { DatabaseModule } from './database/database.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
@@ -19,6 +21,24 @@ import { HealthModule } from './modules/health/health.module';
       envFilePath: ['.env.local', '.env'],
     }),
     EventEmitterModule.forRoot(),
+    // Rate limiting (uses in-memory storage by default)
+    // TODO: For distributed deployments, consider implementing Redis storage
+    // when @nestjs/throttler v6+ is available or using custom implementation
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: 60000, // 60 seconds
+            limit: 60, // 60 requests per minute (default for authenticated users)
+          },
+        ],
+        // In-memory storage (default)
+        // For horizontal scaling, implement custom Redis storage adapter
+      }),
+    }),
     DatabaseModule,
     AuthModule,
     UsersModule,
@@ -31,6 +51,12 @@ import { HealthModule } from './modules/health/health.module';
     HealthModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // Apply throttler guard globally
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Res, UseGuards, HttpCode, Post, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -15,6 +16,7 @@ export class AuthController {
   ) {}
 
   @Get('login')
+  @Throttle({ default: { ttl: 60000, limit: 10 } }) // 10 login attempts per minute
   @ApiOperation({ summary: 'Initiate Azure AD login' })
   @ApiQuery({ name: 'redirect', required: false, description: 'Redirect URL after login' })
   async login(@Query('redirect') redirect: string, @Res() res: Response) {
@@ -26,6 +28,7 @@ export class AuthController {
   }
 
   @Get('callback')
+  @Throttle({ default: { ttl: 60000, limit: 10 } }) // 10 callback attempts per minute
   @ApiOperation({ summary: 'Handle Azure AD OAuth callback' })
   async callback(
     @Query('code') code: string,
