@@ -11,7 +11,7 @@ import { useIncidentsStore } from '@/stores/incidentsStore'
 
 export function Incidents() {
   const navigate = useNavigate()
-  const { data: incidents, isLoading } = useIncidents()
+  const { data: incidents, isLoading, error, refetch } = useIncidents()
   const { filters, setFilters, clearFilters } = useIncidentsStore()
   const [showFilters, setShowFilters] = useState(false)
 
@@ -136,6 +136,13 @@ export function Incidents() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin h-8 w-8 border-4 border-accent-primary border-t-transparent rounded-full" />
         </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-status-critical mb-4">
+            Failed to load incidents: {(error as any)?.message || 'Unknown error'}
+          </p>
+          <Button onClick={() => refetch()}>Retry</Button>
+        </div>
       ) : incidents && incidents.length > 0 ? (
         <div className="space-y-3">
           {incidents.map((incident, index) => (
@@ -149,7 +156,12 @@ export function Incidents() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-dark-400">No incidents found</p>
+          <p className="text-dark-400 mb-2">No incidents found</p>
+          {hasActiveFilters && (
+            <p className="text-sm text-dark-500">
+              Try clearing your filters to see more results
+            </p>
+          )}
         </div>
       )}
     </div>

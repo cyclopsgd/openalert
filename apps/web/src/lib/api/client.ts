@@ -16,15 +16,23 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+    console.log(`[API] ${config.method?.toUpperCase()} ${config.url} (authenticated)`)
+  } else {
+    console.warn(`[API] ${config.method?.toUpperCase()} ${config.url} (no auth token)`)
   }
   return config
 })
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response ${response.status} from ${response.config.url}`)
+    return response
+  },
   (error: AxiosError<ApiError>) => {
+    console.error(`[API] Error ${error.response?.status} from ${error.config?.url}:`, error.response?.data)
     if (error.response?.status === 401) {
+      console.warn('[API] Unauthorized - redirecting to login')
       localStorage.removeItem('authToken')
       window.location.href = '/login'
     }
