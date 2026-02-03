@@ -4,7 +4,7 @@ import { Mail, MessageSquare, Webhook, Check, X, Eye, EyeOff } from 'lucide-reac
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api/client'
 
 interface NotificationConfig {
   email?: {
@@ -40,7 +40,7 @@ export function NotificationSettings() {
     queryKey: ['notification-config'],
     queryFn: async () => {
       try {
-        const response = await api.get('/system-settings/notification-config')
+        const response = await apiClient.get('/system-settings/notification-config')
         return response.data
       } catch {
         return { email: { enabled: false }, sms: { enabled: false }, webhook: { enabled: false } }
@@ -77,7 +77,7 @@ export function NotificationSettings() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: NotificationConfig) => {
-      await api.post('/system-settings/notification-config', data)
+      await apiClient.post('/system-settings/notification-config', data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-config'] })
@@ -87,7 +87,7 @@ export function NotificationSettings() {
 
   const testEmailMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/notifications/test/email', emailConfig)
+      await apiClient.post('/notifications/test/email', emailConfig)
     },
     onSuccess: () => {
       alert('Test email sent successfully')
@@ -99,7 +99,7 @@ export function NotificationSettings() {
 
   const testSmsMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/notifications/test/sms', smsConfig)
+      await apiClient.post('/notifications/test/sms', smsConfig)
     },
     onSuccess: () => {
       alert('Test SMS sent successfully')
@@ -111,7 +111,7 @@ export function NotificationSettings() {
 
   const testWebhookMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/notifications/test/webhook', webhookConfig)
+      await apiClient.post('/notifications/test/webhook', webhookConfig)
     },
     onSuccess: () => {
       alert('Test webhook sent successfully')
