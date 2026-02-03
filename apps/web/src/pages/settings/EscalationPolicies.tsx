@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, ArrowRight, Users, Calendar, Building } from 'lucid
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api/client'
 
 interface EscalationPolicy {
   id: number
@@ -38,14 +38,14 @@ export function EscalationPolicies() {
   const { data: policies, isLoading } = useQuery<EscalationPolicy[]>({
     queryKey: ['escalation-policies'],
     queryFn: async () => {
-      const response = await api.get('/escalation-policies')
+      const response = await apiClient.get('/escalation-policies')
       return response.data
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await api.delete(`/escalation-policies/${id}`)
+      await apiClient.delete(`/escalation-policies/${id}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['escalation-policies'] })
@@ -291,7 +291,7 @@ function EscalationPolicyModal({ policy, onClose }: EscalationPolicyModalProps) 
   const { data: teams } = useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
-      const response = await api.get('/teams')
+      const response = await apiClient.get('/teams')
       return response.data
     },
   })
@@ -299,7 +299,7 @@ function EscalationPolicyModal({ policy, onClose }: EscalationPolicyModalProps) 
   const { data: users } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/users')
+      const response = await apiClient.get('/users')
       return response.data
     },
   })
@@ -307,7 +307,7 @@ function EscalationPolicyModal({ policy, onClose }: EscalationPolicyModalProps) 
   const { data: schedules } = useQuery({
     queryKey: ['schedules'],
     queryFn: async () => {
-      const response = await api.get('/schedules')
+      const response = await apiClient.get('/schedules')
       return response.data
     },
   })
@@ -315,9 +315,9 @@ function EscalationPolicyModal({ policy, onClose }: EscalationPolicyModalProps) 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       if (isEdit) {
-        await api.patch(`/escalation-policies/${policy.id}`, data)
+        await apiClient.patch(`/escalation-policies/${policy.id}`, data)
       } else {
-        await api.post('/escalation-policies', data)
+        await apiClient.post('/escalation-policies', data)
       }
     },
     onSuccess: () => {

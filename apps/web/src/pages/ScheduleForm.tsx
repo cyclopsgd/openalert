@@ -5,7 +5,7 @@ import { ChevronLeft, Save, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api/client'
 
 interface Team {
   id: number
@@ -45,7 +45,7 @@ export function ScheduleForm() {
   const { data: teams } = useQuery<Team[]>({
     queryKey: ['teams'],
     queryFn: async () => {
-      const response = await api.get('/teams')
+      const response = await apiClient.get('/teams')
       return response.data
     },
   })
@@ -53,7 +53,7 @@ export function ScheduleForm() {
   const { data: users } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/users')
+      const response = await apiClient.get('/users')
       return response.data
     },
   })
@@ -61,7 +61,7 @@ export function ScheduleForm() {
   const { data: schedule } = useQuery({
     queryKey: ['schedule', id],
     queryFn: async () => {
-      const response = await api.get(`/schedules/${id}`)
+      const response = await apiClient.get(`/schedules/${id}`)
       return response.data
     },
     enabled: isEdit,
@@ -79,7 +79,7 @@ export function ScheduleForm() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await api.post('/schedules', {
+      const response = await apiClient.post('/schedules', {
         name: data.name,
         timezone: data.timezone,
         teamId: Number(data.teamId),
@@ -89,7 +89,7 @@ export function ScheduleForm() {
     onSuccess: async (data) => {
       // Create rotations
       for (const rotation of rotations) {
-        await api.post(`/schedules/${data.id}/rotations`, {
+        await apiClient.post(`/schedules/${data.id}/rotations`, {
           name: rotation.name,
           rotationType: rotation.rotationType,
           effectiveFrom: new Date(rotation.effectiveFrom).toISOString(),
@@ -101,7 +101,7 @@ export function ScheduleForm() {
         }).then(async (rotationRes) => {
           // Add members
           for (let i = 0; i < rotation.userIds.length; i++) {
-            await api.post(`/schedules/rotations/${rotationRes.data.id}/members`, {
+            await apiClient.post(`/schedules/rotations/${rotationRes.data.id}/members`, {
               userId: rotation.userIds[i],
             })
           }
@@ -115,7 +115,7 @@ export function ScheduleForm() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await api.patch(`/schedules/${id}`, {
+      const response = await apiClient.patch(`/schedules/${id}`, {
         name: data.name,
         timezone: data.timezone,
         teamId: Number(data.teamId),

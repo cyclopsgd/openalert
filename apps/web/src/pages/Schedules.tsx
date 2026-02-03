@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Calendar, Plus, Clock, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api/client'
 
 interface Schedule {
   id: number
@@ -35,7 +35,7 @@ export function Schedules() {
   const { data: schedules, isLoading } = useQuery<Schedule[]>({
     queryKey: ['schedules'],
     queryFn: async () => {
-      const response = await api.get('/schedules')
+      const response = await apiClient.get('/schedules')
       return response.data
     },
   })

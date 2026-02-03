@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import { api } from '@/lib/api'
+import { apiClient } from '@/lib/api/client'
 
 interface Schedule {
   id: number
@@ -64,7 +64,7 @@ export function ScheduleDetail() {
   const { data: schedule, isLoading } = useQuery<Schedule>({
     queryKey: ['schedule', id],
     queryFn: async () => {
-      const response = await api.get(`/schedules/${id}`)
+      const response = await apiClient.get(`/schedules/${id}`)
       return response.data
     },
     enabled: !!id,
@@ -73,7 +73,7 @@ export function ScheduleDetail() {
   const { data: upcomingShifts } = useQuery<UpcomingShift[]>({
     queryKey: ['schedule-upcoming', id],
     queryFn: async () => {
-      const response = await api.get(`/schedules/${id}/upcoming?days=7`)
+      const response = await apiClient.get(`/schedules/${id}/upcoming?days=7`)
       return response.data
     },
     enabled: !!id,
@@ -82,7 +82,7 @@ export function ScheduleDetail() {
   const { data: currentOnCall } = useQuery({
     queryKey: ['schedule-oncall', id],
     queryFn: async () => {
-      const response = await api.get(`/schedules/${id}/current`)
+      const response = await apiClient.get(`/schedules/${id}/current`)
       return response.data
     },
     enabled: !!id,
@@ -91,7 +91,7 @@ export function ScheduleDetail() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await api.delete(`/schedules/${id}`)
+      await apiClient.delete(`/schedules/${id}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] })
