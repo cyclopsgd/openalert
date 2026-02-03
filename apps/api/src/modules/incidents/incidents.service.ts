@@ -86,22 +86,14 @@ export class IncidentsService {
   /**
    * Trigger escalation for an incident
    */
-  private async triggerEscalation(
-    incidentId: number,
-    escalationPolicyId: number,
-  ): Promise<void> {
+  private async triggerEscalation(incidentId: number, escalationPolicyId: number): Promise<void> {
     // Get the first escalation level
     const firstLevel = await this.db.query.escalationLevels.findFirst({
-      where: and(
-        eq(escalationLevels.policyId, escalationPolicyId),
-        eq(escalationLevels.level, 1),
-      ),
+      where: and(eq(escalationLevels.policyId, escalationPolicyId), eq(escalationLevels.level, 1)),
     });
 
     if (!firstLevel) {
-      this.logger.warn(
-        `No escalation levels found for policy ${escalationPolicyId}`,
-      );
+      this.logger.warn(`No escalation levels found for policy ${escalationPolicyId}`);
       return;
     }
 
@@ -251,36 +243,167 @@ export class IncidentsService {
   }
 
   /**
-   * Get incident by ID
+   * Get incident by ID with full related data
    */
-  async findById(id: number): Promise<Incident | undefined> {
-    return this.db.query.incidents.findFirst({
+  async findById(id: number): Promise<any> {
+    const incident = await this.db.query.incidents.findFirst({
       where: eq(incidents.id, id),
       with: {
         service: true,
-        alerts: true,
+        alerts: {
+          orderBy: (alerts, { desc }) => [desc(alerts.firedAt)],
+        },
         timeline: {
           orderBy: (timeline, { desc }) => [desc(timeline.createdAt)],
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
         },
       },
     });
+
+    if (!incident) {
+      return undefined;
+    }
+
+    // Fetch user info for acknowledged and resolved by
+    const acknowledgedByUser = incident.acknowledgedById
+      ? await this.db.query.users.findFirst({
+          where: eq(sql`id`, incident.acknowledgedById),
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        })
+      : null;
+
+    const resolvedByUser = incident.resolvedById
+      ? await this.db.query.users.findFirst({
+          where: eq(sql`id`, incident.resolvedById),
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        })
+      : null;
+
+    return {
+      ...incident,
+      acknowledgedBy: acknowledgedByUser,
+      resolvedBy: resolvedByUser,
+    };
   }
 
   /**
-   * List incidents with pagination
+   * List incidents with pagination and advanced filtering
    */
   async list(params: {
-    status?: 'triggered' | 'acknowledged' | 'resolved';
+    status?: string | string[];
+    severity?: string | string[];
     serviceId?: number;
+    assigneeId?: number;
+    search?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sortBy?: string;
     limit?: number;
     offset?: number;
   }) {
     const conditions = [];
+
+    // Status filter (can be array)
     if (params.status) {
-      conditions.push(eq(incidents.status, params.status));
+      const statuses = Array.isArray(params.status) ? params.status : [params.status];
+      if (statuses.length === 1) {
+        conditions.push(eq(incidents.status, statuses[0] as any));
+      } else if (statuses.length > 1) {
+        conditions.push(
+          sql`${incidents.status} IN (${sql.join(
+            statuses.map((s) => sql.raw(`'${s}'`)),
+            sql`, `,
+          )})`,
+        );
+      }
     }
+
+    // Severity filter (can be array)
+    if (params.severity) {
+      const severities = Array.isArray(params.severity) ? params.severity : [params.severity];
+      if (severities.length === 1) {
+        conditions.push(eq(incidents.severity, severities[0] as any));
+      } else if (severities.length > 1) {
+        conditions.push(
+          sql`${incidents.severity} IN (${sql.join(
+            severities.map((s) => sql.raw(`'${s}'`)),
+            sql`, `,
+          )})`,
+        );
+      }
+    }
+
     if (params.serviceId) {
       conditions.push(eq(incidents.serviceId, params.serviceId));
+    }
+
+    if (params.assigneeId) {
+      conditions.push(eq(incidents.assigneeId, params.assigneeId));
+    }
+
+    // Search in title (and description if available)
+    if (params.search) {
+      conditions.push(sql`${incidents.title} ILIKE ${`%${params.search}%`}`);
+    }
+
+    // Date range filters
+    if (params.dateFrom) {
+      conditions.push(sql`${incidents.triggeredAt} >= ${params.dateFrom}`);
+    }
+    if (params.dateTo) {
+      conditions.push(sql`${incidents.triggeredAt} <= ${params.dateTo}`);
+    }
+
+    // Determine sort order
+    let orderByClause;
+    switch (params.sortBy) {
+      case 'oldest':
+        orderByClause = sql`${incidents.triggeredAt} ASC`;
+        break;
+      case 'severity':
+        // Sort by severity: critical, high, medium, low, info
+        orderByClause = sql`
+          CASE ${incidents.severity}
+            WHEN 'critical' THEN 1
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3
+            WHEN 'low' THEN 4
+            WHEN 'info' THEN 5
+          END ASC,
+          ${incidents.triggeredAt} DESC
+        `;
+        break;
+      case 'status':
+        // Sort by status: triggered, acknowledged, resolved
+        orderByClause = sql`
+          CASE ${incidents.status}
+            WHEN 'triggered' THEN 1
+            WHEN 'acknowledged' THEN 2
+            WHEN 'resolved' THEN 3
+          END ASC,
+          ${incidents.triggeredAt} DESC
+        `;
+        break;
+      case 'newest':
+      default:
+        orderByClause = sql`${incidents.triggeredAt} DESC`;
+        break;
     }
 
     const query = this.db.db
@@ -288,12 +411,60 @@ export class IncidentsService {
       .from(incidents)
       .limit(params.limit || 50)
       .offset(params.offset || 0)
-      .orderBy(sql`${incidents.triggeredAt} DESC`);
+      .orderBy(orderByClause);
 
     if (conditions.length > 0) {
       return query.where(and(...conditions));
     }
 
     return query;
+  }
+
+  /**
+   * Bulk acknowledge incidents
+   */
+  async bulkAcknowledge(
+    incidentIds: number[],
+    userId: number,
+  ): Promise<{ success: number; failed: number }> {
+    let success = 0;
+    let failed = 0;
+
+    for (const incidentId of incidentIds) {
+      try {
+        await this.acknowledge(incidentId, userId);
+        success++;
+      } catch (error) {
+        this.logger.error(`Failed to acknowledge incident ${incidentId}:`, error);
+        failed++;
+      }
+    }
+
+    this.logger.log(`Bulk acknowledge: ${success} succeeded, ${failed} failed`);
+    return { success, failed };
+  }
+
+  /**
+   * Bulk resolve incidents
+   */
+  async bulkResolve(
+    incidentIds: number[],
+    userId: number,
+  ): Promise<{ success: number; failed: number }> {
+    let success = 0;
+    let failed = 0;
+
+    for (const incidentId of incidentIds) {
+      try {
+        await this.resolve(incidentId, userId);
+        success++;
+      } catch (error) {
+        this.logger.error(`Failed to resolve incident ${incidentId}:`, error);
+        failed++;
+      }
+    }
+
+    this.logger.log(`Bulk resolve: ${success} succeeded, ${failed} failed`);
+    return { success, failed };
   }
 }
