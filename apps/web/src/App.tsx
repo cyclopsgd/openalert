@@ -16,6 +16,7 @@ import { SSOSettings } from '@/pages/settings/SSOSettings'
 import { UserManagement } from '@/pages/settings/UserManagement'
 import { IntegrationSettings } from '@/pages/settings/IntegrationSettings'
 import { EscalationPolicies } from '@/pages/settings/EscalationPolicies'
+import { NotificationSettings } from '@/pages/settings/NotificationSettings'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -97,7 +98,7 @@ function AppContent() {
             <Route path="teams" element={<div className="text-center py-12 text-dark-400">Teams coming soon</div>} />
             <Route path="integrations" element={<IntegrationSettings />} />
             <Route path="escalation-policies" element={<EscalationPolicies />} />
-            <Route path="notifications" element={<div className="text-center py-12 text-dark-400">Notifications coming soon</div>} />
+            <Route path="notifications" element={<NotificationSettings />} />
             <Route path="alert-routing" element={<div className="text-center py-12 text-dark-400">Alert Routing coming soon</div>} />
           </Route>
         </Route>
