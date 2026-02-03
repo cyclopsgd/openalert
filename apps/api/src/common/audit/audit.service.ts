@@ -37,7 +37,7 @@ export class AuditService {
       });
 
       this.logger.log(
-        `Audit log created: ${data.action} on ${data.resourceType}${data.resourceId ? `#${data.resourceId}` : ''} by user ${data.userId || 'system'}`
+        `Audit log created: ${data.action} on ${data.resourceType}${data.resourceId ? `#${data.resourceId}` : ''} by user ${data.userId || 'system'}`,
       );
     } catch (error) {
       this.logger.error(`Failed to create audit log: ${error.message}`, error.stack);
@@ -50,7 +50,7 @@ export class AuditService {
     userId: number,
     teamId: number,
     oldValues?: Record<string, any>,
-    newValues?: Record<string, any>
+    newValues?: Record<string, any>,
   ): Promise<void> {
     await this.log({
       userId,
@@ -67,7 +67,7 @@ export class AuditService {
     action: 'created' | 'acknowledged' | 'resolved',
     alertId: number,
     userId?: number,
-    teamId?: number
+    teamId?: number,
   ): Promise<void> {
     await this.log({
       userId,
@@ -83,7 +83,7 @@ export class AuditService {
     teamId: number,
     userId: number,
     targetUserId: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<void> {
     await this.log({
       userId,

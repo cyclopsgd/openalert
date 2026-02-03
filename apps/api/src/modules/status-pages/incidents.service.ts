@@ -88,10 +88,13 @@ export class StatusPageIncidentsService {
   /**
    * List incidents for a status page
    */
-  async findByStatusPage(statusPageId: number, options?: {
-    includeResolved?: boolean;
-    limit?: number;
-  }) {
+  async findByStatusPage(
+    statusPageId: number,
+    options?: {
+      includeResolved?: boolean;
+      limit?: number;
+    },
+  ) {
     let whereClause = eq(statusPageIncidents.statusPageId, statusPageId);
 
     if (!options?.includeResolved) {

@@ -4,6 +4,25 @@
 
 This document covers testing strategies, procedures, and best practices for OpenAlert.
 
+## Quick Start
+
+```bash
+# Run all backend tests
+npm test
+
+# Run backend tests with coverage
+npm run test:coverage
+
+# Run frontend tests
+npm run test:web
+
+# Run E2E tests
+npm run test:e2e
+
+# Run all tests
+npm run test:all
+```
+
 ---
 
 ## Table of Contents

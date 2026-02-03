@@ -94,10 +94,7 @@ export class OnCallResolverService {
   /**
    * Find active rotation and calculate current on-call user
    */
-  private async getActiveRotationUser(
-    scheduleId: number,
-    at: Date,
-  ): Promise<OnCallResult | null> {
+  private async getActiveRotationUser(scheduleId: number, at: Date): Promise<OnCallResult | null> {
     // Find all active rotations for this schedule
     const activeRotations = await this.db.db.query.scheduleRotations.findMany({
       where: and(
@@ -204,14 +201,14 @@ export class OnCallResolverService {
     startHandoff.setHours(handoffHour, handoffMinute, 0, 0);
 
     // If effective from is after today's handoff, start from next day
-    const effectiveStart = effectiveFrom > startHandoff ?
-      new Date(startHandoff.getTime() + 24 * 60 * 60 * 1000) :
-      startHandoff;
+    const effectiveStart =
+      effectiveFrom > startHandoff
+        ? new Date(startHandoff.getTime() + 24 * 60 * 60 * 1000)
+        : startHandoff;
 
     // If current time is before today's handoff, use previous handoff
-    const currentHandoff = at < todayHandoff ?
-      new Date(todayHandoff.getTime() - 24 * 60 * 60 * 1000) :
-      todayHandoff;
+    const currentHandoff =
+      at < todayHandoff ? new Date(todayHandoff.getTime() - 24 * 60 * 60 * 1000) : todayHandoff;
 
     // Calculate days between effective start and current handoff
     const daysDiff = Math.floor(
@@ -255,12 +252,7 @@ export class OnCallResolverService {
   /**
    * Find most recent handoff time before or at given date
    */
-  private findMostRecentHandoff(
-    date: Date,
-    dayOfWeek: number,
-    hour: number,
-    minute: number,
-  ): Date {
+  private findMostRecentHandoff(date: Date, dayOfWeek: number, hour: number, minute: number): Date {
     const result = new Date(date);
     const currentDay = result.getDay();
 

@@ -43,9 +43,7 @@ export class MetricsController {
       metrics.push('# HELP openalert_incidents_by_severity Incidents grouped by severity');
       metrics.push('# TYPE openalert_incidents_by_severity gauge');
       for (const row of incidentsBySeverity) {
-        metrics.push(
-          `openalert_incidents_by_severity{severity="${row.severity}"} ${row.count}`,
-        );
+        metrics.push(`openalert_incidents_by_severity{severity="${row.severity}"} ${row.count}`);
       }
 
       // Alert metrics by status
@@ -67,9 +65,7 @@ export class MetricsController {
       const activeIncidents = await this.db.db
         .select({ count: sql<number>`count(*)::int` })
         .from(incidents)
-        .where(
-          sql`${incidents.status} IN ('triggered', 'acknowledged')`,
-        );
+        .where(sql`${incidents.status} IN ('triggered', 'acknowledged')`);
 
       metrics.push('# HELP openalert_active_incidents Number of active incidents');
       metrics.push('# TYPE openalert_active_incidents gauge');
@@ -133,7 +129,6 @@ export class MetricsController {
       metrics.push('# HELP process_uptime_seconds Process uptime in seconds');
       metrics.push('# TYPE process_uptime_seconds counter');
       metrics.push(`process_uptime_seconds ${process.uptime()}`);
-
     } catch (error) {
       metrics.push(`# Error gathering metrics: ${error.message}`);
     }

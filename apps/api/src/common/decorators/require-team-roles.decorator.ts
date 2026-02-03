@@ -11,5 +11,4 @@ import { TEAM_ROLES_KEY, TeamRole } from '../guards/team-member.guard';
  * @RequireTeamRoles(['admin', 'owner'])
  * async deleteService(@Param('id') id: string) { ... }
  */
-export const RequireTeamRoles = (roles: TeamRole[]) =>
-  SetMetadata(TEAM_ROLES_KEY, roles);
+export const RequireTeamRoles = (roles: TeamRole[]) => SetMetadata(TEAM_ROLES_KEY, roles);

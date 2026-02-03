@@ -91,7 +91,10 @@ export class SchedulesController {
 
   @Post(':id/rotations')
   @ApiOperation({ summary: 'Create a rotation for a schedule' })
-  createRotation(@Param('id') scheduleId: string, @Body() dto: Omit<CreateRotationDto, 'scheduleId'>) {
+  createRotation(
+    @Param('id') scheduleId: string,
+    @Body() dto: Omit<CreateRotationDto, 'scheduleId'>,
+  ) {
     return this.rotationsService.create({
       ...dto,
       scheduleId: Number(scheduleId),
@@ -127,19 +130,13 @@ export class SchedulesController {
 
   @Post('rotations/:rotationId/members')
   @ApiOperation({ summary: 'Add a member to rotation' })
-  addRotationMember(
-    @Param('rotationId') rotationId: string,
-    @Body() dto: { userId: number },
-  ) {
+  addRotationMember(@Param('rotationId') rotationId: string, @Body() dto: { userId: number }) {
     return this.rotationsService.addMember(Number(rotationId), dto.userId);
   }
 
   @Delete('rotations/:rotationId/members/:userId')
   @ApiOperation({ summary: 'Remove a member from rotation' })
-  removeRotationMember(
-    @Param('rotationId') rotationId: string,
-    @Param('userId') userId: string,
-  ) {
+  removeRotationMember(@Param('rotationId') rotationId: string, @Param('userId') userId: string) {
     return this.rotationsService.removeMember(Number(rotationId), Number(userId));
   }
 

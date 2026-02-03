@@ -38,16 +38,10 @@ export class OverridesService {
     }
 
     // Check for overlapping overrides
-    const overlapping = await this.findOverlapping(
-      data.scheduleId,
-      data.startTime,
-      data.endTime,
-    );
+    const overlapping = await this.findOverlapping(data.scheduleId, data.startTime, data.endTime);
 
     if (overlapping.length > 0) {
-      this.logger.warn(
-        `Override overlaps with ${overlapping.length} existing override(s)`,
-      );
+      this.logger.warn(`Override overlaps with ${overlapping.length} existing override(s)`);
       // Allow overlaps but log warning - last override wins
     }
 
@@ -87,11 +81,14 @@ export class OverridesService {
   /**
    * List overrides for a schedule
    */
-  async findBySchedule(scheduleId: number, options?: {
-    includePast?: boolean;
-    from?: Date;
-    to?: Date;
-  }) {
+  async findBySchedule(
+    scheduleId: number,
+    options?: {
+      includePast?: boolean;
+      from?: Date;
+      to?: Date;
+    },
+  ) {
     const now = new Date();
     const conditions = [eq(scheduleOverrides.scheduleId, scheduleId)];
 
@@ -131,15 +128,9 @@ export class OverridesService {
             gte(scheduleOverrides.endTime, startTime),
           ),
           // New override ends during existing override
-          and(
-            lte(scheduleOverrides.startTime, endTime),
-            gte(scheduleOverrides.endTime, endTime),
-          ),
+          and(lte(scheduleOverrides.startTime, endTime), gte(scheduleOverrides.endTime, endTime)),
           // New override completely contains existing override
-          and(
-            gte(scheduleOverrides.startTime, startTime),
-            lte(scheduleOverrides.endTime, endTime),
-          ),
+          and(gte(scheduleOverrides.startTime, startTime), lte(scheduleOverrides.endTime, endTime)),
         ),
       ),
     });
@@ -212,10 +203,7 @@ export class OverridesService {
     const result = await this.db.db
       .delete(scheduleOverrides)
       .where(
-        and(
-          eq(scheduleOverrides.scheduleId, scheduleId),
-          lte(scheduleOverrides.endTime, before),
-        ),
+        and(eq(scheduleOverrides.scheduleId, scheduleId), lte(scheduleOverrides.endTime, before)),
       )
       .returning();
 

@@ -9,17 +9,7 @@ import { OnCallResolverService } from './oncall-resolver.service';
 @Module({
   imports: [DatabaseModule],
   controllers: [SchedulesController],
-  providers: [
-    SchedulesService,
-    RotationsService,
-    OverridesService,
-    OnCallResolverService,
-  ],
-  exports: [
-    SchedulesService,
-    RotationsService,
-    OverridesService,
-    OnCallResolverService,
-  ],
+  providers: [SchedulesService, RotationsService, OverridesService, OnCallResolverService],
+  exports: [SchedulesService, RotationsService, OverridesService, OnCallResolverService],
 })
 export class SchedulesModule {}

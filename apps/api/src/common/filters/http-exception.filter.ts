@@ -44,17 +44,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     // Log error with context
-    this.logger.error(
-      `HTTP ${status} Error: ${errorResponse.message}`,
-      {
-        path: request.url,
-        method: request.method,
-        correlationId,
-        userAgent: request.headers['user-agent'],
-        ip: request.ip,
-        errors: errorResponse.errors,
-      },
-    );
+    this.logger.error(`HTTP ${status} Error: ${errorResponse.message}`, {
+      path: request.url,
+      method: request.method,
+      correlationId,
+      userAgent: request.headers['user-agent'],
+      ip: request.ip,
+      errors: errorResponse.errors,
+    });
 
     response.status(status).send(errorResponse);
   }

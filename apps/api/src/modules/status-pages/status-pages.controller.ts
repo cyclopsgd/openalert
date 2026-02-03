@@ -19,11 +19,7 @@ import {
   CreateStatusPageDto,
   UpdateStatusPageDto,
 } from './status-pages.service';
-import {
-  ComponentsService,
-  CreateComponentDto,
-  UpdateComponentDto,
-} from './components.service';
+import { ComponentsService, CreateComponentDto, UpdateComponentDto } from './components.service';
 import {
   StatusPageIncidentsService,
   CreateStatusPageIncidentDto,
@@ -114,10 +110,7 @@ export class StatusPagesManagementController {
 
   @Patch('components/:componentId')
   @ApiOperation({ summary: 'Update component' })
-  updateComponent(
-    @Param('componentId') componentId: string,
-    @Body() dto: UpdateComponentDto,
-  ) {
+  updateComponent(@Param('componentId') componentId: string, @Body() dto: UpdateComponentDto) {
     return this.componentsService.update(Number(componentId), dto);
   }
 
@@ -129,10 +122,7 @@ export class StatusPagesManagementController {
 
   @Post(':id/components/reorder')
   @ApiOperation({ summary: 'Reorder components' })
-  reorderComponents(
-    @Param('id') statusPageId: string,
-    @Body() dto: { componentIds: number[] },
-  ) {
+  reorderComponents(@Param('id') statusPageId: string, @Body() dto: { componentIds: number[] }) {
     return this.componentsService.reorder(Number(statusPageId), dto.componentIds);
   }
 
@@ -185,10 +175,7 @@ export class StatusPagesManagementController {
 
   @Post('incidents/:incidentId/resolve')
   @ApiOperation({ summary: 'Resolve an incident' })
-  resolveIncident(
-    @Param('incidentId') incidentId: string,
-    @Body() dto: { message: string },
-  ) {
+  resolveIncident(@Param('incidentId') incidentId: string, @Body() dto: { message: string }) {
     return this.incidentsService.resolveIncident(Number(incidentId), dto.message);
   }
 }

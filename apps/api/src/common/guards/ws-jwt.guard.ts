@@ -41,7 +41,10 @@ export class WsJwtGuard implements CanActivate {
       }
 
       // Verify JWT token
-      const secret = this.configService.get<string>('JWT_SECRET', 'dev-secret-change-in-production');
+      const secret = this.configService.get<string>(
+        'JWT_SECRET',
+        'dev-secret-change-in-production',
+      );
       const payload = this.jwtService.verify(token, { secret });
 
       // Load user data

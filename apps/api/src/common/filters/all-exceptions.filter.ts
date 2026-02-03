@@ -23,9 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Determine HTTP status code
     const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Generate correlation ID
     const correlationId =
@@ -67,25 +65,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Log error with full stack trace for 500 errors
     if (status >= 500) {
-      this.logger.error(
-        `Unhandled Exception: ${message}`,
-        {
-          path: request.url,
-          method: request.method,
-          correlationId,
-          userAgent: request.headers['user-agent'],
-          ip: request.ip,
-          stack: exception instanceof Error ? exception.stack : undefined,
-        },
-      );
+      this.logger.error(`Unhandled Exception: ${message}`, {
+        path: request.url,
+        method: request.method,
+        correlationId,
+        userAgent: request.headers['user-agent'],
+        ip: request.ip,
+        stack: exception instanceof Error ? exception.stack : undefined,
+      });
     } else {
-      this.logger.warn(
-        `Client Error ${status}: ${message}`,
-        {
-          path: request.url,
-          correlationId,
-        },
-      );
+      this.logger.warn(`Client Error ${status}: ${message}`, {
+        path: request.url,
+        correlationId,
+      });
     }
 
     response.status(status).send(errorResponse);
@@ -103,7 +95,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorCode === '23503' || // Foreign key violation
       errorCode === '23502' || // Not null violation
       errorCode === '22P02' || // Invalid text representation
-      errorCode === '42P01'    // Undefined table
+      errorCode === '42P01' // Undefined table
     );
   }
 

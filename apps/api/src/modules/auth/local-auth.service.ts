@@ -65,7 +65,7 @@ export class LocalAuthService {
     // Generate JWT
     const accessToken = this.jwtService.sign(
       { sub: newUser.id, email: newUser.email, name: newUser.name },
-      { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' }
+      { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' },
     );
 
     return {
@@ -80,11 +80,7 @@ export class LocalAuthService {
 
   async login(dto: LoginDto) {
     // Find user by email
-    const [user] = await this.db.db
-      .select()
-      .from(users)
-      .where(eq(users.email, dto.email))
-      .limit(1);
+    const [user] = await this.db.db.select().from(users).where(eq(users.email, dto.email)).limit(1);
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -98,7 +94,7 @@ export class LocalAuthService {
     // Check if user uses local auth
     if (user.authProvider !== 'local') {
       throw new UnauthorizedException(
-        `This account uses ${user.authProvider} authentication. Please sign in with ${user.authProvider}.`
+        `This account uses ${user.authProvider} authentication. Please sign in with ${user.authProvider}.`,
       );
     }
 
@@ -113,17 +109,14 @@ export class LocalAuthService {
     }
 
     // Update last login time
-    await this.db.db
-      .update(users)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(users.id, user.id));
+    await this.db.db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
 
     this.logger.log(`User logged in: ${user.email}`);
 
     // Generate JWT
     const accessToken = this.jwtService.sign(
       { sub: user.id, email: user.email, name: user.name },
-      { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' }
+      { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' },
     );
 
     return {

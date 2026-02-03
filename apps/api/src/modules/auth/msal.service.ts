@@ -59,7 +59,9 @@ export class MsalService {
    */
   async getAuthCodeUrl(redirectUri: string, state?: string): Promise<string> {
     if (!this.msalClient) {
-      throw new Error('Azure Entra ID not configured. Use /auth/dev-token/:userId for development.');
+      throw new Error(
+        'Azure Entra ID not configured. Use /auth/dev-token/:userId for development.',
+      );
     }
 
     const authCodeUrlParameters: msal.AuthorizationUrlRequest = {
@@ -81,12 +83,11 @@ export class MsalService {
   /**
    * Exchange authorization code for access token
    */
-  async acquireTokenByCode(
-    code: string,
-    redirectUri: string,
-  ): Promise<msal.AuthenticationResult> {
+  async acquireTokenByCode(code: string, redirectUri: string): Promise<msal.AuthenticationResult> {
     if (!this.msalClient) {
-      throw new Error('Azure Entra ID not configured. Use /auth/dev-token/:userId for development.');
+      throw new Error(
+        'Azure Entra ID not configured. Use /auth/dev-token/:userId for development.',
+      );
     }
 
     const tokenRequest: msal.AuthorizationCodeRequest = {

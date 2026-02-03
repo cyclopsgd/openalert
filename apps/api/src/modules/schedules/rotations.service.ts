@@ -201,8 +201,7 @@ export class RotationsService {
     const result = await this.db.db
       .delete(rotationMembers)
       .where(
-        eq(rotationMembers.rotationId, rotationId) &&
-          eq(rotationMembers.userId, userId) as any,
+        eq(rotationMembers.rotationId, rotationId) && (eq(rotationMembers.userId, userId) as any),
       )
       .returning();
 

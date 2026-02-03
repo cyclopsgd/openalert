@@ -459,7 +459,10 @@ export const scheduleRotationsRelations = relations(scheduleRotations, ({ one, m
 }));
 
 export const rotationMembersRelations = relations(rotationMembers, ({ one }) => ({
-  rotation: one(scheduleRotations, { fields: [rotationMembers.rotationId], references: [scheduleRotations.id] }),
+  rotation: one(scheduleRotations, {
+    fields: [rotationMembers.rotationId],
+    references: [scheduleRotations.id],
+  }),
   user: one(users, { fields: [rotationMembers.userId], references: [users.id] }),
 }));
 
@@ -475,17 +478,29 @@ export const statusPagesRelations = relations(statusPages, ({ one, many }) => ({
 }));
 
 export const statusPageComponentsRelations = relations(statusPageComponents, ({ one }) => ({
-  statusPage: one(statusPages, { fields: [statusPageComponents.statusPageId], references: [statusPages.id] }),
+  statusPage: one(statusPages, {
+    fields: [statusPageComponents.statusPageId],
+    references: [statusPages.id],
+  }),
 }));
 
 export const statusPageIncidentsRelations = relations(statusPageIncidents, ({ one, many }) => ({
-  statusPage: one(statusPages, { fields: [statusPageIncidents.statusPageId], references: [statusPages.id] }),
-  internalIncident: one(incidents, { fields: [statusPageIncidents.internalIncidentId], references: [incidents.id] }),
+  statusPage: one(statusPages, {
+    fields: [statusPageIncidents.statusPageId],
+    references: [statusPages.id],
+  }),
+  internalIncident: one(incidents, {
+    fields: [statusPageIncidents.internalIncidentId],
+    references: [incidents.id],
+  }),
   updates: many(statusPageUpdates),
 }));
 
 export const statusPageUpdatesRelations = relations(statusPageUpdates, ({ one }) => ({
-  incident: one(statusPageIncidents, { fields: [statusPageUpdates.incidentId], references: [statusPageIncidents.id] }),
+  incident: one(statusPageIncidents, {
+    fields: [statusPageUpdates.incidentId],
+    references: [statusPageIncidents.id],
+  }),
 }));
 
 export const incidentTimelineRelations = relations(incidentTimeline, ({ one }) => ({
@@ -504,12 +519,18 @@ export const escalationPoliciesRelations = relations(escalationPolicies, ({ one,
 }));
 
 export const escalationLevelsRelations = relations(escalationLevels, ({ one, many }) => ({
-  policy: one(escalationPolicies, { fields: [escalationLevels.policyId], references: [escalationPolicies.id] }),
+  policy: one(escalationPolicies, {
+    fields: [escalationLevels.policyId],
+    references: [escalationPolicies.id],
+  }),
   targets: many(escalationTargets),
 }));
 
 export const escalationTargetsRelations = relations(escalationTargets, ({ one }) => ({
-  level: one(escalationLevels, { fields: [escalationTargets.levelId], references: [escalationLevels.id] }),
+  level: one(escalationLevels, {
+    fields: [escalationTargets.levelId],
+    references: [escalationLevels.id],
+  }),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({

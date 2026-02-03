@@ -7,14 +7,24 @@ export interface CreateComponentDto {
   statusPageId: number;
   name: string;
   description?: string;
-  status?: 'operational' | 'degraded_performance' | 'partial_outage' | 'major_outage' | 'under_maintenance';
+  status?:
+    | 'operational'
+    | 'degraded_performance'
+    | 'partial_outage'
+    | 'major_outage'
+    | 'under_maintenance';
   position?: number;
 }
 
 export interface UpdateComponentDto {
   name?: string;
   description?: string;
-  status?: 'operational' | 'degraded_performance' | 'partial_outage' | 'major_outage' | 'under_maintenance';
+  status?:
+    | 'operational'
+    | 'degraded_performance'
+    | 'partial_outage'
+    | 'major_outage'
+    | 'under_maintenance';
   position?: number;
 }
 

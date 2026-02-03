@@ -60,10 +60,7 @@ export class AlertsController {
   @Post('prometheus/:integrationKey')
   @HttpCode(202)
   @ApiOperation({ summary: 'Receive webhook from Prometheus Alertmanager' })
-  async receivePrometheus(
-    @Param('integrationKey') integrationKey: string,
-    @Body() payload: any,
-  ) {
+  async receivePrometheus(@Param('integrationKey') integrationKey: string, @Body() payload: any) {
     this.logger.log(`Received Prometheus webhook for integration: ${integrationKey}`);
 
     const alerts = this.transformer.transformPrometheus(payload);

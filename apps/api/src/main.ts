@@ -65,7 +65,7 @@ async function bootstrap() {
   // Global exception filters (order matters: specific to general)
   app.useGlobalFilters(
     new HttpExceptionFilter(), // HTTP exceptions
-    new AllExceptionsFilter(),  // All other exceptions
+    new AllExceptionsFilter(), // All other exceptions
   );
 
   // Global interceptors
@@ -73,7 +73,10 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ],
     credentials: true,
   });
 

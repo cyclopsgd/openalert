@@ -1,4 +1,14 @@
-import { Controller, Get, Query, Res, UseGuards, HttpCode, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Res,
+  UseGuards,
+  HttpCode,
+  Post,
+  Param,
+  Body,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
@@ -50,11 +60,7 @@ export class AuthController {
   @Get('callback')
   @Throttle({ default: { ttl: 60000, limit: 10 } }) // 10 callback attempts per minute
   @ApiOperation({ summary: 'Handle Azure AD OAuth callback' })
-  async callback(
-    @Query('code') code: string,
-    @Query('state') state: string,
-    @Res() res: Response,
-  ) {
+  async callback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     if (!code) {
       return res.status(400).json({ error: 'No authorization code provided' });
     }

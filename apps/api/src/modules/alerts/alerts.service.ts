@@ -110,9 +110,7 @@ export class AlertsService {
         .map(([k, v]) => `${k}=${v}`),
     ];
 
-    const hash = createHash('sha256')
-      .update(parts.join('|'))
-      .digest('hex');
+    const hash = createHash('sha256').update(parts.join('|')).digest('hex');
 
     return hash.substring(0, 64);
   }

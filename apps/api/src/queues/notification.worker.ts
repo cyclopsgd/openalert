@@ -149,7 +149,9 @@ export class NotificationWorkerService implements OnModuleInit {
       this.logger.log(`✅ Email sent successfully to ${payload.email}`);
     } catch (error) {
       this.logger.error(`❌ Failed to send email to ${payload.email}:`, error);
-      throw new Error(`SendGrid error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `SendGrid error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -232,9 +234,7 @@ export class NotificationWorkerService implements OnModuleInit {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  private async sendPushNotification(
-    payload: NotificationJobData['payload'],
-  ): Promise<void> {
+  private async sendPushNotification(payload: NotificationJobData['payload']): Promise<void> {
     this.logger.log(`[STUB] Sending push notification: ${payload.message}`);
     // TODO: Integrate with Firebase Cloud Messaging / APNs
     await new Promise((resolve) => setTimeout(resolve, 100));

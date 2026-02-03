@@ -8,13 +8,26 @@ import {
 import { Reflector } from '@nestjs/core';
 import { DatabaseService } from '../../database/database.service';
 import { eq, and } from 'drizzle-orm';
-import { teamMembers, services, incidents, schedules, escalationPolicies, statusPages } from '../../database/schema';
+import {
+  teamMembers,
+  services,
+  incidents,
+  schedules,
+  escalationPolicies,
+  statusPages,
+} from '../../database/schema';
 
 export const TEAM_ROLES_KEY = 'teamRoles';
 export const TEAM_RESOURCE_KEY = 'teamResource';
 
 export type TeamRole = 'owner' | 'admin' | 'member';
-export type TeamResource = 'service' | 'incident' | 'schedule' | 'escalation-policy' | 'status-page' | 'team';
+export type TeamResource =
+  | 'service'
+  | 'incident'
+  | 'schedule'
+  | 'escalation-policy'
+  | 'status-page'
+  | 'team';
 
 /**
  * Guard to verify user is a member of the team that owns the requested resource
@@ -49,7 +62,9 @@ export class TeamMemberGuard implements CanActivate {
     }
 
     // Extract resource ID from route params
-    const resourceId = Number(request.params.id || request.params.teamId || request.params.serviceId);
+    const resourceId = Number(
+      request.params.id || request.params.teamId || request.params.serviceId,
+    );
 
     if (!resourceId || isNaN(resourceId)) {
       throw new ForbiddenException('Resource ID not found in request');
@@ -64,10 +79,7 @@ export class TeamMemberGuard implements CanActivate {
 
     // Check if user is a member of the team
     const membership = await this.db.query.teamMembers.findFirst({
-      where: and(
-        eq(teamMembers.teamId, teamId),
-        eq(teamMembers.userId, user.id),
-      ),
+      where: and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, user.id)),
     });
 
     if (!membership) {

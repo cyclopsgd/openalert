@@ -15,9 +15,17 @@ interface SSOConfig {
   registrationEnabled: boolean
 }
 
+interface FormData {
+  tenantId: string
+  clientId: string
+  clientSecret: string
+  ssoEnabled: boolean
+  registrationEnabled: boolean
+}
+
 export function SSOSettings() {
   const queryClient = useQueryClient()
-  const [formData, setFormData] = useState<SSOConfig>({
+  const [formData, setFormData] = useState<FormData>({
     tenantId: '',
     clientId: '',
     clientSecret: '',
@@ -32,16 +40,21 @@ export function SSOSettings() {
       const response = await apiClient.get<SSOConfig>('/system-settings/sso')
       return response.data
     },
-    onSuccess: (data) => {
-      setFormData({
-        tenantId: data.tenantId || '',
-        clientId: data.clientId || '',
-        clientSecret: data.clientSecret || '',
-        ssoEnabled: data.ssoEnabled,
-        registrationEnabled: data.registrationEnabled,
-      })
-    },
   })
+
+  // Update form when data is loaded
+  if (config && !hasChanges) {
+    const newFormData = {
+      tenantId: config.tenantId || '',
+      clientId: config.clientId || '',
+      clientSecret: config.clientSecret || '',
+      ssoEnabled: config.ssoEnabled,
+      registrationEnabled: config.registrationEnabled,
+    }
+    if (JSON.stringify(newFormData) !== JSON.stringify(formData)) {
+      setFormData(newFormData)
+    }
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<SSOConfig>) => {
@@ -54,7 +67,7 @@ export function SSOSettings() {
     },
   })
 
-  const handleInputChange = (field: keyof SSOConfig, value: string | boolean) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     setHasChanges(true)
   }

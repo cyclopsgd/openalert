@@ -157,11 +157,12 @@ export class WebhookTransformerService {
         severity: this.mapDatadogSeverity(payload.alert_type || payload.priority),
         status,
         source: 'datadog',
-        labels: payload.tags?.reduce((acc: any, tag: string) => {
-          const [key, value] = tag.split(':');
-          acc[key] = value || '';
-          return acc;
-        }, {}) || {},
+        labels:
+          payload.tags?.reduce((acc: any, tag: string) => {
+            const [key, value] = tag.split(':');
+            acc[key] = value || '';
+            return acc;
+          }, {}) || {},
         annotations: {
           hostname: payload.hostname,
           org_id: payload.org?.id,
@@ -183,12 +184,11 @@ export class WebhookTransformerService {
         alertName: payload.name || payload.alert || payload.event || 'Generic Alert',
         title: payload.title || payload.subject || payload.name || 'Alert',
         description: payload.description || payload.message || payload.body,
-        severity: this.mapGenericSeverity(
-          payload.severity || payload.priority || payload.level,
-        ),
-        status: payload.status === 'resolved' || payload.state === 'ok'
-          ? AlertStatus.RESOLVED
-          : AlertStatus.FIRING,
+        severity: this.mapGenericSeverity(payload.severity || payload.priority || payload.level),
+        status:
+          payload.status === 'resolved' || payload.state === 'ok'
+            ? AlertStatus.RESOLVED
+            : AlertStatus.FIRING,
         source: payload.source || 'webhook',
         labels: payload.labels || payload.tags || {},
         annotations: payload.annotations || {},

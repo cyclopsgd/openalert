@@ -63,9 +63,7 @@ export class EscalationWorkerService implements OnModuleInit {
   private async processEscalation(job: Job<EscalationJobData>): Promise<void> {
     const { incidentId, escalationPolicyId, currentLevel } = job.data;
 
-    this.logger.log(
-      `Processing escalation for incident ${incidentId}, level ${currentLevel}`,
-    );
+    this.logger.log(`Processing escalation for incident ${incidentId}, level ${currentLevel}`);
 
     // 1. Check if incident is still active
     const incident = await this.db.query.incidents.findFirst({
@@ -78,9 +76,7 @@ export class EscalationWorkerService implements OnModuleInit {
     }
 
     if (incident.status !== 'triggered') {
-      this.logger.log(
-        `Incident ${incidentId} is ${incident.status}, skipping escalation`,
-      );
+      this.logger.log(`Incident ${incidentId} is ${incident.status}, skipping escalation`);
       return;
     }
 
@@ -148,11 +144,7 @@ export class EscalationWorkerService implements OnModuleInit {
     }
   }
 
-  private async notifyUser(
-    incidentId: number,
-    userId: number,
-    severity: string,
-  ): Promise<void> {
+  private async notifyUser(incidentId: number, userId: number, severity: string): Promise<void> {
     const user = await this.db.query.users.findFirst({
       where: eq(users.id, userId),
     });
@@ -205,11 +197,7 @@ export class EscalationWorkerService implements OnModuleInit {
     await this.notificationQueue.queueBulkNotifications(notifications);
   }
 
-  private async notifyTeam(
-    incidentId: number,
-    teamId: number,
-    severity: string,
-  ): Promise<void> {
+  private async notifyTeam(incidentId: number, teamId: number, severity: string): Promise<void> {
     // Get all active team members
     const members = await this.db.db
       .select({ userId: teamMembers.userId })
