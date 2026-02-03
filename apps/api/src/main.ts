@@ -4,6 +4,9 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import fastifyCookie from '@fastify/cookie';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -21,14 +24,38 @@ async function bootstrap() {
     secret: process.env.COOKIE_SECRET || process.env.JWT_SECRET || 'dev-cookie-secret',
   });
 
-  // Global validation pipe
+  // Global validation pipe with detailed error messages
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      exceptionFactory: (errors) => {
+        // Format validation errors consistently
+        const messages = errors.map((error) => {
+          const constraints = error.constraints || {};
+          return Object.values(constraints).join(', ');
+        });
+        return {
+          statusCode: 400,
+          message: 'Validation failed',
+          errors: messages,
+        };
+      },
     }),
   );
+
+  // Global exception filters (order matters: specific to general)
+  app.useGlobalFilters(
+    new HttpExceptionFilter(), // HTTP exceptions
+    new AllExceptionsFilter(),  // All other exceptions
+  );
+
+  // Global interceptors
+  app.useGlobalInterceptors(new CorrelationIdInterceptor());
 
   // CORS configuration
   app.enableCors({
