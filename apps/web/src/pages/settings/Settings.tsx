@@ -100,31 +100,33 @@ export function Settings() {
       )}
 
       {!isRootSettings && (
-        <div className="flex gap-6">
-          <aside className="w-64 space-y-1">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <aside className="w-full lg:w-64 space-y-1">
             <p className="text-xs text-dark-500 mb-2 px-3 font-medium uppercase tracking-wider">
               Settings
             </p>
-            {settingsNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-accent-primary text-white'
-                      : 'text-dark-300 hover:bg-dark-800 hover:text-dark-100'
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </NavLink>
-            ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2">
+              {settingsNavItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-accent-primary text-white'
+                        : 'text-dark-300 hover:bg-dark-800 hover:text-dark-100'
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{item.name}</span>
+                </NavLink>
+              ))}
+            </div>
           </aside>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Outlet />
           </div>
         </div>

@@ -4,6 +4,8 @@ import { Building2, Save, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { useToast } from '@/components/ui/Toast'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 interface GeneralSettings {
   organizationName: string
@@ -36,6 +38,7 @@ const dateTimeFormats = [
 ]
 
 export function GeneralSettings() {
+  const { success, error } = useToast()
   const [settings, setSettings] = useState<GeneralSettings>({
     organizationName: '',
     organizationLogoUrl: '',
@@ -47,7 +50,6 @@ export function GeneralSettings() {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -73,7 +75,6 @@ export function GeneralSettings() {
 
   const handleSave = async () => {
     setSaving(true)
-    setSuccess(false)
     try {
       const response = await fetch('http://localhost:3001/api/system-settings/general', {
         method: 'PUT',
@@ -85,11 +86,13 @@ export function GeneralSettings() {
       })
 
       if (response.ok) {
-        setSuccess(true)
-        setTimeout(() => setSuccess(false), 3000)
+        success('Settings saved', 'Your general settings have been updated successfully.')
+      } else {
+        error('Failed to save', 'An error occurred while saving your settings.')
       }
-    } catch (error) {
-      console.error('Failed to update general settings:', error)
+    } catch (err) {
+      console.error('Failed to update general settings:', err)
+      error('Failed to save', 'An error occurred while saving your settings.')
     } finally {
       setSaving(false)
     }
@@ -97,9 +100,22 @@ export function GeneralSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-accent-primary border-t-transparent rounded-full" />
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <Card className="p-6 space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </Card>
+      </motion.div>
     )
   }
 
@@ -264,11 +280,7 @@ export function GeneralSettings() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-dark-700">
-          {success && (
-            <p className="text-sm text-green-500">Settings saved successfully!</p>
-          )}
-          <div className="flex-1" />
+        <div className="flex justify-end pt-4 border-t border-dark-700">
           <Button onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? 'Saving...' : 'Save Settings'}

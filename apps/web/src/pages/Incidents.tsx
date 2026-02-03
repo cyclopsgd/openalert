@@ -132,16 +132,16 @@ export function Incidents() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-heading font-bold text-dark-50 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-dark-50 mb-1 sm:mb-2">
           Incidents
         </h1>
-        <p className="text-dark-400">
+        <p className="text-sm sm:text-base text-dark-400">
           Manage and track all your incidents
         </p>
       </motion.div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-dark-400" />
             <Input
@@ -151,24 +151,27 @@ export function Incidents() {
               className="pl-10"
             />
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4" />
-            Filters
-            {activeFilterCount > 0 && (
-              <Badge className="ml-2 bg-accent-primary text-dark-900">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-          {hasActiveFilters && (
-            <Button variant="ghost" onClick={() => { clearFilters(); clearSelection(); }}>
-              <X className="h-4 w-4" />
-              Clear
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex-1 sm:flex-none"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Filters</span>
+              {activeFilterCount > 0 && (
+                <Badge className="ml-2 bg-accent-primary text-dark-900">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
-          )}
+            {hasActiveFilters && (
+              <Button variant="ghost" onClick={() => { clearFilters(); clearSelection(); }} className="flex-1 sm:flex-none">
+                <X className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Clear</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         {showFilters && (

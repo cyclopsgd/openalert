@@ -66,15 +66,15 @@ export function RecentIncidentsTable({ incidents }: RecentIncidentsTableProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-6 sm:mx-0">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-dark-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-dark-400">ID</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-dark-400">Title</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-dark-400">Severity</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-dark-400">Status</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-dark-400">Time</th>
+                <th className="text-left py-3 px-4 text-xs sm:text-sm font-medium text-dark-400">ID</th>
+                <th className="text-left py-3 px-4 text-xs sm:text-sm font-medium text-dark-400">Title</th>
+                <th className="text-left py-3 px-4 text-xs sm:text-sm font-medium text-dark-400">Severity</th>
+                <th className="text-left py-3 px-4 text-xs sm:text-sm font-medium text-dark-400">Status</th>
+                <th className="text-left py-3 px-4 text-xs sm:text-sm font-medium text-dark-400">Time</th>
               </tr>
             </thead>
             <tbody>
@@ -84,18 +84,18 @@ export function RecentIncidentsTable({ incidents }: RecentIncidentsTableProps) {
                   className="border-b border-dark-800 hover:bg-dark-800/50 cursor-pointer transition-colors"
                   onClick={() => navigate(`/incidents/${incident.id}`)}
                 >
-                  <td className="py-3 px-4 text-sm text-dark-300">
+                  <td className="py-3 px-4 text-xs sm:text-sm text-dark-300 whitespace-nowrap">
                     #{incident.incidentNumber}
                   </td>
-                  <td className="py-3 px-4 text-sm text-dark-200 max-w-md truncate">
+                  <td className="py-3 px-4 text-xs sm:text-sm text-dark-200 max-w-[200px] sm:max-w-md truncate">
                     {incident.title}
                   </td>
-                  <td className="py-3 px-4 text-sm">
+                  <td className="py-3 px-4 text-xs sm:text-sm whitespace-nowrap">
                     <span className={`capitalize ${severityColors[incident.severity]}`}>
                       {incident.severity}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm">
+                  <td className="py-3 px-4 text-xs sm:text-sm whitespace-nowrap">
                     <span
                       className={`px-2 py-1 rounded-md text-xs capitalize ${
                         statusColors[incident.status]
@@ -104,10 +104,15 @@ export function RecentIncidentsTable({ incidents }: RecentIncidentsTableProps) {
                       {incident.status}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm text-dark-400">
+                  <td className="py-3 px-4 text-xs sm:text-sm text-dark-400 whitespace-nowrap">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(incident.triggeredAt), { addSuffix: true })}
+                      <span className="hidden sm:inline">
+                        {formatDistanceToNow(new Date(incident.triggeredAt), { addSuffix: true })}
+                      </span>
+                      <span className="sm:hidden">
+                        {formatDistanceToNow(new Date(incident.triggeredAt))}
+                      </span>
                     </div>
                   </td>
                 </tr>

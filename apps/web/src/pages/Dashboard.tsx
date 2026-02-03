@@ -34,19 +34,20 @@ export function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
         <div>
-          <h1 className="text-3xl font-heading font-bold text-dark-50 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-dark-50 mb-1 sm:mb-2">
             Dashboard
           </h1>
-          <p className="text-dark-400">
+          <p className="text-sm sm:text-base text-dark-400">
             Monitor and manage your incidents in real-time
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-dark-500">
           <RefreshCw className="h-3 w-3" />
-          <span>Updates every 30s</span>
+          <span className="hidden sm:inline">Updates every 30s</span>
+          <span className="sm:hidden">Live</span>
         </div>
       </motion.div>
 
