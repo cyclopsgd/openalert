@@ -18,6 +18,17 @@ export interface Service {
   teamId: number
 }
 
+export interface TimelineEvent {
+  id: number
+  incidentId: number
+  eventType: string
+  userId?: number
+  user?: User
+  description: string
+  metadata?: Record<string, unknown>
+  createdAt: string
+}
+
 export interface Incident {
   id: number
   incidentNumber: number
@@ -29,11 +40,15 @@ export interface Incident {
   assigneeId?: number
   acknowledgedById?: number
   resolvedById?: number
+  acknowledgedBy?: User
+  resolvedBy?: User
   triggeredAt: string
   acknowledgedAt?: string
   resolvedAt?: string
   createdAt: string
   updatedAt: string
+  alerts?: Alert[]
+  timeline?: TimelineEvent[]
 }
 
 export interface Alert {
@@ -80,6 +95,43 @@ export interface Metrics {
   acknowledged: number
   resolved: number
   mttr: string
+}
+
+export interface DashboardMetrics {
+  activeCount: number
+  mtta: string
+  mttr: string
+  severityBreakdown: {
+    critical: number
+    high: number
+    medium: number
+    low: number
+    info: number
+  }
+  statusBreakdown: {
+    triggered: number
+    acknowledged: number
+    resolved: number
+  }
+  onCallEngineer?: {
+    name: string
+    email: string
+  }
+}
+
+export interface IncidentTrend {
+  date: string
+  critical: number
+  high: number
+  medium: number
+  low: number
+  info: number
+  total: number
+}
+
+export interface ResponseTimeBucket {
+  bucket: string
+  count: number
 }
 
 export interface StatusPage {

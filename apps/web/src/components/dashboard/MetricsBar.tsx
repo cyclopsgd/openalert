@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
-  CheckCircle,
   Clock,
   Activity,
+  User,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import type { Metrics } from '@/types/api'
+import type { DashboardMetrics } from '@/types/api'
 
 interface MetricCardProps {
   icon: React.ReactNode
@@ -14,9 +14,10 @@ interface MetricCardProps {
   value: number | string
   color: string
   index: number
+  subtitle?: string
 }
 
-function MetricCard({ icon, label, value, color, index }: MetricCardProps) {
+function MetricCard({ icon, label, value, color, index, subtitle }: MetricCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -31,6 +32,9 @@ function MetricCard({ icon, label, value, color, index }: MetricCardProps) {
               {value}
             </p>
             <p className="text-sm text-dark-400">{label}</p>
+            {subtitle && (
+              <p className="text-xs text-dark-500 mt-1">{subtitle}</p>
+            )}
           </div>
         </div>
       </Card>
@@ -39,40 +43,45 @@ function MetricCard({ icon, label, value, color, index }: MetricCardProps) {
 }
 
 interface MetricsBarProps {
-  metrics: Metrics
+  metrics: DashboardMetrics
 }
 
 export function MetricsBar({ metrics }: MetricsBarProps) {
+  const totalCriticalHigh = metrics.severityBreakdown.critical + metrics.severityBreakdown.high
+
   const metricCards = [
+    {
+      icon: <Activity className="h-5 w-5 text-accent-primary" />,
+      label: 'Active Incidents',
+      value: metrics.activeCount,
+      color: 'bg-accent-primary/10',
+      subtitle: metrics.activeCount > 0 ? `${totalCriticalHigh} critical/high` : undefined,
+    },
     {
       icon: <AlertTriangle className="h-5 w-5 text-status-critical" />,
       label: 'Critical',
-      value: metrics.critical,
+      value: metrics.severityBreakdown.critical,
       color: 'bg-status-critical/10',
     },
     {
-      icon: <Activity className="h-5 w-5 text-status-warning" />,
-      label: 'Active',
-      value: metrics.active,
-      color: 'bg-status-warning/10',
-    },
-    {
       icon: <Clock className="h-5 w-5 text-accent-secondary" />,
-      label: 'Acknowledged',
-      value: metrics.acknowledged,
+      label: 'MTTA',
+      value: metrics.mtta || '0m',
       color: 'bg-accent-secondary/10',
+      subtitle: 'Mean Time To Acknowledge',
     },
     {
-      icon: <CheckCircle className="h-5 w-5 text-status-success" />,
-      label: 'Resolved',
-      value: metrics.resolved,
-      color: 'bg-status-success/10',
-    },
-    {
-      icon: <Clock className="h-5 w-5 text-accent-primary" />,
+      icon: <Clock className="h-5 w-5 text-status-warning" />,
       label: 'MTTR',
-      value: metrics.mttr,
-      color: 'bg-accent-primary/10',
+      value: metrics.mttr || '0m',
+      color: 'bg-status-warning/10',
+      subtitle: 'Mean Time To Resolve',
+    },
+    {
+      icon: metrics.onCallEngineer ? <User className="h-5 w-5 text-status-success" /> : <User className="h-5 w-5 text-dark-500" />,
+      label: 'On Call',
+      value: metrics.onCallEngineer?.name || 'N/A',
+      color: metrics.onCallEngineer ? 'bg-status-success/10' : 'bg-dark-700/50',
     },
   ]
 

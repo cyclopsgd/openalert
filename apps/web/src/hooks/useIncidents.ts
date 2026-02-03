@@ -3,6 +3,28 @@ import { apiClient } from '@/lib/api/client'
 import type { Incident } from '@/types/api'
 import { useIncidentsStore } from '@/stores/incidentsStore'
 
+function getDateRangeFromOption(option: string): { from?: string; to?: string } {
+  const now = new Date()
+  const to = now.toISOString()
+
+  switch (option) {
+    case '24h': {
+      const from = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      return { from: from.toISOString(), to }
+    }
+    case '7d': {
+      const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      return { from: from.toISOString(), to }
+    }
+    case '30d': {
+      const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      return { from: from.toISOString(), to }
+    }
+    default:
+      return {}
+  }
+}
+
 export function useIncidents() {
   const { filters } = useIncidentsStore()
 
@@ -11,6 +33,7 @@ export function useIncidents() {
     queryFn: async () => {
       try {
         const params = new URLSearchParams()
+
         if (filters.status.length > 0) {
           filters.status.forEach((s) => params.append('status', s))
         }
@@ -19,6 +42,27 @@ export function useIncidents() {
         }
         if (filters.search) {
           params.append('search', filters.search)
+        }
+        if (filters.assigneeId) {
+          params.append('assigneeId', filters.assigneeId.toString())
+        }
+        if (filters.serviceId) {
+          params.append('serviceId', filters.serviceId.toString())
+        }
+        if (filters.sortBy) {
+          params.append('sortBy', filters.sortBy)
+        }
+
+        // Handle date range
+        if (filters.dateRange !== 'all') {
+          if (filters.dateRange === 'custom') {
+            if (filters.dateFrom) params.append('dateFrom', filters.dateFrom)
+            if (filters.dateTo) params.append('dateTo', filters.dateTo)
+          } else {
+            const { from, to } = getDateRangeFromOption(filters.dateRange)
+            if (from) params.append('dateFrom', from)
+            if (to) params.append('dateTo', to)
+          }
         }
 
         const queryString = params.toString()
@@ -84,6 +128,40 @@ export function useResolveIncident() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
       queryClient.setQueryData(['incident', data.id], data)
+    },
+  })
+}
+
+export function useBulkAcknowledgeIncidents() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (incidentIds: number[]) => {
+      const response = await apiClient.post<{ success: number; failed: number }>(
+        '/incidents/bulk/acknowledge',
+        { incidentIds }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
+}
+
+export function useBulkResolveIncidents() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (incidentIds: number[]) => {
+      const response = await apiClient.post<{ success: number; failed: number }>(
+        '/incidents/bulk/resolve',
+        { incidentIds }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
     },
   })
 }

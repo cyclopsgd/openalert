@@ -6,6 +6,9 @@ import {
   User,
   CheckCircle,
   AlertTriangle,
+  Clock,
+  TrendingUp,
+  FileText,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -19,9 +22,24 @@ import {
   useAcknowledgeIncident,
   useResolveIncident,
 } from '@/hooks/useIncidents'
-import { useAlerts } from '@/hooks/useAlerts'
 import { useRealtime } from '@/hooks/useRealtime'
 import { formatDateTime, formatTimeAgo } from '@/lib/utils/format'
+
+const eventTypeIcons: Record<string, any> = {
+  triggered: AlertTriangle,
+  acknowledged: User,
+  resolved: CheckCircle,
+  escalated: TrendingUp,
+  note_added: FileText,
+}
+
+const eventTypeColors: Record<string, string> = {
+  triggered: 'bg-status-critical/10 text-status-critical',
+  acknowledged: 'bg-status-warning/10 text-status-warning',
+  resolved: 'bg-status-success/10 text-status-success',
+  escalated: 'bg-accent-secondary/10 text-accent-secondary',
+  note_added: 'bg-accent-primary/10 text-accent-primary',
+}
 
 export function IncidentDetail() {
   const { id } = useParams<{ id: string }>()
@@ -29,13 +47,10 @@ export function IncidentDetail() {
   const incidentId = parseInt(id || '0', 10)
 
   const { data: incident, isLoading } = useIncident(incidentId)
-  const { data: allAlerts } = useAlerts()
   const { subscribeToIncident, unsubscribeFromIncident } = useRealtime()
 
   const acknowledgeMutation = useAcknowledgeIncident()
   const resolveMutation = useResolveIncident()
-
-  const alerts = allAlerts?.filter((a) => a.incidentId === incidentId) || []
 
   useEffect(() => {
     if (incidentId) {
@@ -74,6 +89,19 @@ export function IncidentDetail() {
     )
   }
 
+  const alerts = incident.alerts || []
+  const timeline = incident.timeline || []
+
+  // Group alerts by source/integration
+  const alertsBySource = alerts.reduce((acc, alert) => {
+    const source = alert.source || 'Unknown'
+    if (!acc[source]) {
+      acc[source] = []
+    }
+    acc[source].push(alert)
+    return acc
+  }, {} as Record<string, typeof alerts>)
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -89,16 +117,16 @@ export function IncidentDetail() {
           Back to Incidents
         </Button>
 
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-2 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-mono text-dark-400">
                 #{incident.incidentNumber}
               </span>
               <SeverityBadge severity={incident.severity} />
               <IncidentStatusBadge status={incident.status} />
             </div>
-            <h1 className="text-3xl font-heading font-bold text-dark-50">
+            <h1 className="text-3xl font-heading font-bold text-dark-50 break-words">
               {incident.title}
             </h1>
             {incident.service && (
@@ -106,7 +134,7 @@ export function IncidentDetail() {
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             {incident.status === 'triggered' && (
               <Button
                 variant="secondary"
@@ -138,96 +166,87 @@ export function IncidentDetail() {
               <CardTitle>Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {incident.resolvedAt && (
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-8 w-8 rounded-full bg-status-success/10 flex items-center justify-center">
-                        <CheckCircle className="h-4 w-4 text-status-success" />
-                      </div>
-                      <div className="flex-1 w-0.5 bg-dark-700 min-h-[20px]" />
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <p className="text-sm font-medium text-dark-100">
-                        Incident Resolved
-                      </p>
-                      <p className="text-xs text-dark-400">
-                        {formatDateTime(incident.resolvedAt)}
-                      </p>
-                    </div>
-                  </div>
-                )}
+              {timeline.length > 0 ? (
+                <div className="space-y-4">
+                  {timeline.map((event, index) => {
+                    const Icon = eventTypeIcons[event.eventType] || Clock
+                    const colorClass = eventTypeColors[event.eventType] || 'bg-dark-700 text-dark-300'
+                    const isLast = index === timeline.length - 1
 
-                {incident.acknowledgedAt && (
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-8 w-8 rounded-full bg-status-warning/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-status-warning" />
+                    return (
+                      <div key={event.id} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${colorClass}`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          {!isLast && (
+                            <div className="flex-1 w-0.5 bg-dark-700 min-h-[20px]" />
+                          )}
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <p className="text-sm font-medium text-dark-100">
+                            {event.description}
+                          </p>
+                          {event.user && (
+                            <p className="text-xs text-dark-400 mt-1">
+                              by {event.user.name}
+                            </p>
+                          )}
+                          <p className="text-xs text-dark-500 mt-1">
+                            {formatDateTime(event.createdAt)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 w-0.5 bg-dark-700 min-h-[20px]" />
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <p className="text-sm font-medium text-dark-100">
-                        Incident Acknowledged
-                      </p>
-                      <p className="text-xs text-dark-400">
-                        {formatDateTime(incident.acknowledgedAt)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="h-8 w-8 rounded-full bg-status-critical/10 flex items-center justify-center">
-                      <AlertTriangle className="h-4 w-4 text-status-critical" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-dark-100">
-                      Incident Triggered
-                    </p>
-                    <p className="text-xs text-dark-400">
-                      {formatDateTime(incident.triggeredAt)}
-                    </p>
-                  </div>
+                    )
+                  })}
                 </div>
-              </div>
+              ) : (
+                <p className="text-sm text-dark-400">No timeline events</p>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Alerts ({alerts.length})</CardTitle>
+              <CardTitle>Related Alerts ({alerts.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {alerts.length > 0 ? (
-                <div className="space-y-3">
-                  {alerts.map((alert) => (
-                    <div
-                      key={alert.id}
-                      className="p-3 bg-dark-750 rounded-lg border border-dark-700"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <p className="font-medium text-dark-100">
-                            {alert.title || alert.alertName}
-                          </p>
-                          {alert.description && (
-                            <p className="text-sm text-dark-400 mt-1">
-                              {alert.description}
-                            </p>
-                          )}
-                          {alert.startsAt && (
-                            <p className="text-xs text-dark-500 mt-2">
-                              {formatTimeAgo(alert.startsAt)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <SeverityBadge severity={alert.severity} />
-                          <AlertStatusBadge status={alert.status} />
-                        </div>
+                <div className="space-y-4">
+                  {Object.entries(alertsBySource).map(([source, sourceAlerts]) => (
+                    <div key={source}>
+                      <h3 className="text-sm font-medium text-dark-300 mb-2">
+                        {source} ({sourceAlerts.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {sourceAlerts.map((alert) => (
+                          <div
+                            key={alert.id}
+                            className="p-3 bg-dark-750 rounded-lg border border-dark-700"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-dark-100 break-words">
+                                  {alert.title || alert.alertName}
+                                </p>
+                                {alert.description && (
+                                  <p className="text-sm text-dark-400 mt-1 break-words">
+                                    {alert.description}
+                                  </p>
+                                )}
+                                {alert.startsAt && (
+                                  <p className="text-xs text-dark-500 mt-2">
+                                    Started {formatTimeAgo(alert.startsAt)}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                <SeverityBadge severity={alert.severity} />
+                                <AlertStatusBadge status={alert.status} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -237,6 +256,22 @@ export function IncidentDetail() {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Metrics & Graphs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p className="text-dark-400 text-sm">
+                  Grafana integration coming soon
+                </p>
+                <p className="text-dark-500 text-xs mt-2">
+                  This will show related metrics and graphs for this incident
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -244,44 +279,53 @@ export function IncidentDetail() {
             <CardHeader>
               <CardTitle>Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div>
-                <p className="text-xs text-dark-400">Status</p>
-                <p className="text-sm font-medium text-dark-100 mt-1">
-                  <IncidentStatusBadge status={incident.status} />
-                </p>
+                <p className="text-xs text-dark-400 mb-1">Status</p>
+                <IncidentStatusBadge status={incident.status} />
               </div>
               <div>
-                <p className="text-xs text-dark-400">Severity</p>
-                <p className="text-sm font-medium text-dark-100 mt-1">
-                  <SeverityBadge severity={incident.severity} />
-                </p>
+                <p className="text-xs text-dark-400 mb-1">Severity</p>
+                <SeverityBadge severity={incident.severity} />
               </div>
               <div>
-                <p className="text-xs text-dark-400">Service</p>
-                <p className="text-sm font-medium text-dark-100 mt-1">
+                <p className="text-xs text-dark-400 mb-1">Service</p>
+                <p className="text-sm font-medium text-dark-100">
                   {incident.service?.name || 'N/A'}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-dark-400">Triggered</p>
-                <p className="text-sm font-medium text-dark-100 mt-1">
+                <p className="text-xs text-dark-400 mb-1">Triggered</p>
+                <p className="text-sm font-medium text-dark-100">
+                  {formatDateTime(incident.triggeredAt)}
+                </p>
+                <p className="text-xs text-dark-500 mt-1">
                   {formatTimeAgo(incident.triggeredAt)}
                 </p>
               </div>
               {incident.acknowledgedAt && (
                 <div>
-                  <p className="text-xs text-dark-400">Acknowledged</p>
-                  <p className="text-sm font-medium text-dark-100 mt-1">
-                    {formatTimeAgo(incident.acknowledgedAt)}
+                  <p className="text-xs text-dark-400 mb-1">Acknowledged</p>
+                  {incident.acknowledgedBy && (
+                    <p className="text-sm font-medium text-dark-100">
+                      {incident.acknowledgedBy.name}
+                    </p>
+                  )}
+                  <p className="text-xs text-dark-500 mt-1">
+                    {formatDateTime(incident.acknowledgedAt)}
                   </p>
                 </div>
               )}
               {incident.resolvedAt && (
                 <div>
-                  <p className="text-xs text-dark-400">Resolved</p>
-                  <p className="text-sm font-medium text-dark-100 mt-1">
-                    {formatTimeAgo(incident.resolvedAt)}
+                  <p className="text-xs text-dark-400 mb-1">Resolved</p>
+                  {incident.resolvedBy && (
+                    <p className="text-sm font-medium text-dark-100">
+                      {incident.resolvedBy.name}
+                    </p>
+                  )}
+                  <p className="text-xs text-dark-500 mt-1">
+                    {formatDateTime(incident.resolvedAt)}
                   </p>
                 </div>
               )}
