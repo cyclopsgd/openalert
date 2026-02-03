@@ -7,6 +7,9 @@ import { Incidents } from '@/pages/Incidents'
 import { IncidentDetail } from '@/pages/IncidentDetail'
 import { Alerts } from '@/pages/Alerts'
 import { Login } from '@/pages/Login'
+import { Settings } from '@/pages/settings/Settings'
+import { SSOSettings } from '@/pages/settings/SSOSettings'
+import { UserManagement } from '@/pages/settings/UserManagement'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 
@@ -74,7 +77,11 @@ function AppContent() {
           <Route path="alerts" element={<Alerts />} />
           <Route path="schedules" element={<div className="text-center py-12 text-dark-400">Schedules coming soon</div>} />
           <Route path="status-pages" element={<div className="text-center py-12 text-dark-400">Status Pages coming soon</div>} />
-          <Route path="settings" element={<div className="text-center py-12 text-dark-400">Settings coming soon</div>} />
+          <Route path="settings" element={<Settings />}>
+            <Route index element={<Settings />} />
+            <Route path="sso" element={<SSOSettings />} />
+            <Route path="users" element={<UserManagement />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
