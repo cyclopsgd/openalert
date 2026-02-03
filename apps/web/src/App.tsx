@@ -6,8 +6,12 @@ import { Dashboard } from '@/pages/Dashboard'
 import { Incidents } from '@/pages/Incidents'
 import { IncidentDetail } from '@/pages/IncidentDetail'
 import { Alerts } from '@/pages/Alerts'
+import { Schedules } from '@/pages/Schedules'
+import { ScheduleDetail } from '@/pages/ScheduleDetail'
+import { ScheduleForm } from '@/pages/ScheduleForm'
 import { Login } from '@/pages/Login'
 import { Settings } from '@/pages/settings/Settings'
+import { GeneralSettings } from '@/pages/settings/GeneralSettings'
 import { SSOSettings } from '@/pages/settings/SSOSettings'
 import { UserManagement } from '@/pages/settings/UserManagement'
 import { useAuthStore } from '@/stores/authStore'
@@ -75,12 +79,19 @@ function AppContent() {
           <Route path="incidents" element={<Incidents />} />
           <Route path="incidents/:id" element={<IncidentDetail />} />
           <Route path="alerts" element={<Alerts />} />
-          <Route path="schedules" element={<div className="text-center py-12 text-dark-400">Schedules coming soon</div>} />
+          <Route path="schedules" element={<Schedules />} />
+          <Route path="schedules/new" element={<ScheduleForm />} />
+          <Route path="schedules/:id" element={<ScheduleDetail />} />
+          <Route path="schedules/:id/edit" element={<ScheduleForm />} />
           <Route path="status-pages" element={<div className="text-center py-12 text-dark-400">Status Pages coming soon</div>} />
           <Route path="settings" element={<Settings />}>
             <Route index element={<Settings />} />
+            <Route path="general" element={<GeneralSettings />} />
             <Route path="sso" element={<SSOSettings />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="teams" element={<div className="text-center py-12 text-dark-400">Teams coming soon</div>} />
+            <Route path="integrations" element={<div className="text-center py-12 text-dark-400">Integrations coming soon</div>} />
+            <Route path="alert-routing" element={<div className="text-center py-12 text-dark-400">Alert Routing coming soon</div>} />
           </Route>
         </Route>
       </Routes>

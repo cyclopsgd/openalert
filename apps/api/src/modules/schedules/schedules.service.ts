@@ -67,6 +67,28 @@ export class SchedulesService {
   }
 
   /**
+   * List all schedules
+   */
+  async findAll() {
+    return this.db.db.query.schedules.findMany({
+      with: {
+        team: true,
+        rotations: {
+          with: {
+            members: {
+              with: {
+                user: true,
+              },
+              orderBy: (members, { asc }) => [asc(members.position)],
+            },
+          },
+        },
+      },
+      orderBy: (schedules, { desc }) => [desc(schedules.createdAt)],
+    });
+  }
+
+  /**
    * List all schedules for a team
    */
   async findByTeam(teamId: number) {
@@ -138,5 +160,50 @@ export class SchedulesService {
         user: true,
       },
     });
+  }
+
+  /**
+   * Get upcoming on-call shifts for the next N days
+   */
+  async getUpcomingShifts(scheduleId: number, days: number = 7) {
+    const schedule = await this.findById(scheduleId);
+    const shifts: Array<{
+      date: string;
+      user: { id: number; name: string; email: string } | null;
+      rotation: string | null;
+    }> = [];
+
+    const now = new Date();
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+
+      // For each rotation, determine who is on call
+      // This is a simplified version - in production, you'd use the OnCallResolverService
+      let user = null;
+      let rotationName = null;
+
+      if (schedule.rotations && schedule.rotations.length > 0) {
+        const rotation = schedule.rotations[0];
+        if (rotation.members && rotation.members.length > 0) {
+          // Simple rotation logic - would be more complex in reality
+          const daysSinceStart = Math.floor(
+            (date.getTime() - new Date(rotation.effectiveFrom).getTime()) / (1000 * 60 * 60 * 24),
+          );
+          const memberIndex = daysSinceStart % rotation.members.length;
+          const member = rotation.members[memberIndex];
+          user = member.user;
+          rotationName = rotation.name || 'Rotation';
+        }
+      }
+
+      shifts.push({
+        date: date.toISOString().split('T')[0],
+        user: user ? { id: user.id, name: user.name, email: user.email } : null,
+        rotation: rotationName,
+      });
+    }
+
+    return shifts;
   }
 }

@@ -49,6 +49,12 @@ export class SchedulesController {
     return this.schedulesService.findById(Number(id));
   }
 
+  @Get()
+  @ApiOperation({ summary: 'List all schedules' })
+  listSchedules() {
+    return this.schedulesService.findAll();
+  }
+
   @Get('team/:teamId')
   @ApiOperation({ summary: 'List schedules for a team' })
   listTeamSchedules(@Param('teamId') teamId: string) {
@@ -85,6 +91,23 @@ export class SchedulesController {
   ) {
     const atDate = at ? new Date(at) : new Date();
     return this.onCallResolver.resolveOnCall(Number(id), atDate);
+  }
+
+  @Get(':id/current')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
+  @ApiOperation({ summary: 'Get current on-call user (alias for oncall)' })
+  getCurrentOnCall(@Param('id') id: string) {
+    return this.onCallResolver.resolveOnCall(Number(id), new Date());
+  }
+
+  @Get(':id/upcoming')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
+  @ApiOperation({ summary: 'Get upcoming on-call shifts for the next 7 days' })
+  getUpcomingShifts(@Param('id') id: string, @Query('days') days?: string) {
+    const numDays = days ? Number(days) : 7;
+    return this.schedulesService.getUpcomingShifts(Number(id), numDays);
   }
 
   // === Rotations ===
