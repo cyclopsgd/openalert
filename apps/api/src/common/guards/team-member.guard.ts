@@ -20,7 +20,7 @@ import {
 export const TEAM_ROLES_KEY = 'teamRoles';
 export const TEAM_RESOURCE_KEY = 'teamResource';
 
-export type TeamRole = 'owner' | 'admin' | 'member';
+export type TeamRole = 'team_admin' | 'member' | 'observer';
 export type TeamResource =
   | 'service'
   | 'incident'
@@ -88,7 +88,7 @@ export class TeamMemberGuard implements CanActivate {
 
     // Check role requirements if specified
     if (requiredRoles && requiredRoles.length > 0) {
-      if (!requiredRoles.includes(membership.role as TeamRole)) {
+      if (!requiredRoles.includes(membership.teamRole as TeamRole)) {
         throw new ForbiddenException(
           `This action requires one of the following roles: ${requiredRoles.join(', ')}`,
         );
@@ -97,7 +97,7 @@ export class TeamMemberGuard implements CanActivate {
 
     // Attach team context to request for use in controllers
     request.teamId = teamId;
-    request.userRole = membership.role;
+    request.userRole = membership.teamRole;
 
     return true;
   }

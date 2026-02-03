@@ -17,6 +17,9 @@ import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { ServicesModule } from './modules/services/services.module';
+import { TeamsModule } from './modules/teams/teams.module';
+import { AlertRoutingModule } from './modules/alert-routing/alert-routing.module';
 
 @Module({
   imports: [
@@ -57,6 +60,9 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
     MetricsModule,
     SystemSettingsModule,
     IntegrationsModule,
+    ServicesModule,
+    TeamsModule,
+    AlertRoutingModule,
   ],
   controllers: [],
   providers: [

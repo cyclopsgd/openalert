@@ -134,6 +134,7 @@ export class UsersService {
       offset?: number;
       authProvider?: string;
       isActive?: boolean;
+      role?: string;
     } = {},
   ) {
     const conditions = [];
@@ -144,6 +145,10 @@ export class UsersService {
 
     if (params.isActive !== undefined) {
       conditions.push(eq(users.isActive, params.isActive));
+    }
+
+    if (params.role) {
+      conditions.push(eq(users.role, params.role));
     }
 
     const query = this.db.db
@@ -199,5 +204,50 @@ export class UsersService {
     });
 
     return user?.teamMemberships || [];
+  }
+
+  /**
+   * Change user's global role
+   */
+  async changeRole(userId: number, newRole: string, actorId: number): Promise<User> {
+    const user = await this.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+
+    // Prevent users from changing their own role
+    if (userId === actorId) {
+      throw new BadRequestException('You cannot change your own role');
+    }
+
+    // Validate role
+    const validRoles = ['superadmin', 'admin', 'responder', 'observer'];
+    if (!validRoles.includes(newRole)) {
+      throw new BadRequestException(`Invalid role: ${newRole}`);
+    }
+
+    // Prevent demoting the last superadmin
+    if (user.role === 'superadmin') {
+      const superadminCount = await this.db.db
+        .select()
+        .from(users)
+        .where(eq(users.role, 'superadmin'));
+
+      if (superadminCount.length <= 1) {
+        throw new BadRequestException(
+          'Cannot change role of the last superadmin. Promote another user first.',
+        );
+      }
+    }
+
+    const [updated] = await this.db.db
+      .update(users)
+      .set({ role: newRole, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    this.logger.log(`Changed role of user ${userId} to ${newRole} by user ${actorId}`);
+    return updated;
   }
 }

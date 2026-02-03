@@ -10,6 +10,7 @@ export interface CreateStatusPageDto {
   description?: string;
   isPublic?: boolean;
   customDomain?: string;
+  themeColor?: string;
   logoUrl?: string;
   headerHtml?: string;
   footerHtml?: string;
@@ -21,6 +22,7 @@ export interface UpdateStatusPageDto {
   description?: string;
   isPublic?: boolean;
   customDomain?: string;
+  themeColor?: string;
   logoUrl?: string;
   headerHtml?: string;
   footerHtml?: string;
@@ -53,6 +55,7 @@ export class StatusPagesService {
         description: data.description,
         isPublic: data.isPublic ?? true,
         customDomain: data.customDomain,
+        themeColor: data.themeColor || '#6366f1',
         logoUrl: data.logoUrl,
         headerHtml: data.headerHtml,
         footerHtml: data.footerHtml,

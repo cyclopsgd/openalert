@@ -2,7 +2,9 @@ import { Controller, Get, Param, Patch, Body, Query, UseGuards, Post } from '@ne
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { TeamMemberGuard } from '../../common/guards/team-member.guard';
+import { RequireRole } from '../../common/decorators/require-role.decorator';
 import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { TeamResourceDecorator } from '../../common/decorators/team-resource.decorator';
 import { ListIncidentsDto } from './dto/list-incidents.dto';
@@ -13,7 +15,7 @@ import { BulkResolveDto } from './dto/bulk-resolve.dto';
 
 @ApiTags('incidents')
 @Controller('incidents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
@@ -47,6 +49,7 @@ export class IncidentsController {
   @Patch(':id/acknowledge')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('incident')
+  @RequireRole('superadmin', 'admin', 'responder')
   @ApiOperation({ summary: 'Acknowledge an incident' })
   async acknowledge(
     @Param('id') id: string,
@@ -59,6 +62,7 @@ export class IncidentsController {
   @Patch(':id/resolve')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('incident')
+  @RequireRole('superadmin', 'admin', 'responder')
   @ApiOperation({ summary: 'Resolve an incident' })
   async resolve(
     @Param('id') id: string,
@@ -69,12 +73,14 @@ export class IncidentsController {
   }
 
   @Post('bulk/acknowledge')
+  @RequireRole('superadmin', 'admin', 'responder')
   @ApiOperation({ summary: 'Bulk acknowledge multiple incidents' })
   async bulkAcknowledge(@Body() dto: BulkAcknowledgeDto, @CurrentUser() user: CurrentUserData) {
     return this.incidentsService.bulkAcknowledge(dto.incidentIds, user.id);
   }
 
   @Post('bulk/resolve')
+  @RequireRole('superadmin', 'admin', 'responder')
   @ApiOperation({ summary: 'Bulk resolve multiple incidents' })
   async bulkResolve(@Body() dto: BulkResolveDto, @CurrentUser() user: CurrentUserData) {
     return this.incidentsService.bulkResolve(dto.incidentIds, user.id);

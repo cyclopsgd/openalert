@@ -11,8 +11,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/hooks/usePermissions'
+import { RoleBadge } from '@/components/ui/RoleBadge'
+import { Permission } from '@/lib/permissions/permissions'
 
-const navItems = [
+interface NavItem {
+  name: string
+  href: string
+  icon: typeof LayoutDashboard
+  permission?: Permission
+}
+
+const navItems: NavItem[] = [
   {
     name: 'Dashboard',
     href: '/',
@@ -22,31 +33,44 @@ const navItems = [
     name: 'Incidents',
     href: '/incidents',
     icon: AlertTriangle,
+    permission: 'incidents.view',
   },
   {
     name: 'Alerts',
     href: '/alerts',
     icon: Bell,
+    permission: 'alerts.view',
   },
   {
     name: 'Schedules',
     href: '/schedules',
     icon: Calendar,
+    permission: 'schedules.view',
   },
   {
     name: 'Status Pages',
     href: '/status-pages',
     icon: BarChart3,
+    permission: 'status_pages.view',
   },
   {
     name: 'Settings',
     href: '/settings',
     icon: Settings,
+    permission: 'settings.view',
   },
 ]
 
 export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, isMobile } = useUIStore()
+  const { user } = useAuthStore()
+  const { hasPermission } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const visibleNavItems = navItems.filter((item) => {
+    if (!item.permission) return true
+    return hasPermission(item.permission)
+  })
 
   const handleClose = () => {
     if (isMobile) {
@@ -98,7 +122,7 @@ export function Sidebar() {
             </div>
 
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <NavLink
                   key={item.href}
                   to={item.href}
@@ -119,16 +143,25 @@ export function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-dark-700">
-              <div className="flex items-center gap-3 px-3 py-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-dark-100 truncate">
-                    User
-                  </p>
-                  <p className="text-xs text-dark-400 truncate">
-                    user@example.com
-                  </p>
+              <div className="px-3 py-2 space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-medium text-sm">
+                    {user?.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-dark-100 truncate">
+                      {user?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-dark-400 truncate">
+                      {user?.email || 'user@example.com'}
+                    </p>
+                  </div>
                 </div>
+                {user?.role && (
+                  <div className="flex justify-center">
+                    <RoleBadge role={user.role} />
+                  </div>
+                )}
               </div>
             </div>
           </motion.aside>

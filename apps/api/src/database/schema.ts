@@ -34,6 +34,14 @@ export const notificationChannelEnum = pgEnum('notification_channel', [
   'slack',
   'teams',
 ]);
+export const serviceStatusEnum = pgEnum('service_status', [
+  'operational',
+  'degraded',
+  'outage',
+  'maintenance',
+]);
+export const userRoleEnum = pgEnum('user_role', ['superadmin', 'admin', 'responder', 'observer']);
+export const teamRoleEnum = pgEnum('team_role', ['team_admin', 'member', 'observer']);
 
 // Teams
 export const teams = pgTable('teams', {
@@ -55,6 +63,7 @@ export const users = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     passwordHash: varchar('password_hash', { length: 255 }), // For local auth
     authProvider: varchar('auth_provider', { length: 50 }).default('local'), // local, azure_ad, google, etc.
+    role: varchar('role', { length: 50 }).default('responder').notNull(), // Global role: superadmin, admin, responder, observer
     phoneNumber: varchar('phone_number', { length: 50 }),
     timezone: varchar('timezone', { length: 100 }).default('UTC'),
     isActive: boolean('is_active').default(true).notNull(),
@@ -65,6 +74,7 @@ export const users = pgTable(
   (table) => ({
     emailIdx: index('users_email_idx').on(table.email),
     externalIdIdx: index('users_external_id_idx').on(table.externalId),
+    roleIdx: index('users_role_idx').on(table.role),
   }),
 );
 
@@ -89,7 +99,7 @@ export const teamMembers = pgTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    role: varchar('role', { length: 50 }).default('member').notNull(), // owner, admin, member
+    teamRole: varchar('team_role', { length: 50 }).default('member').notNull(), // team_admin, member, observer
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({
@@ -109,12 +119,36 @@ export const services = pgTable(
       .notNull()
       .references(() => teams.id),
     escalationPolicyId: integer('escalation_policy_id'),
+    status: serviceStatusEnum('status').default('operational').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
     slugIdx: uniqueIndex('services_slug_idx').on(table.slug),
     teamIdx: index('services_team_idx').on(table.teamId),
+  }),
+);
+
+// Service Dependencies (tracks which services depend on others)
+export const serviceDependencies = pgTable(
+  'service_dependencies',
+  {
+    id: serial('id').primaryKey(),
+    serviceId: integer('service_id')
+      .notNull()
+      .references(() => services.id, { onDelete: 'cascade' }),
+    dependsOnServiceId: integer('depends_on_service_id')
+      .notNull()
+      .references(() => services.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueDependency: uniqueIndex('unique_service_dependency').on(
+      table.serviceId,
+      table.dependsOnServiceId,
+    ),
+    serviceIdx: index('service_dependencies_service_idx').on(table.serviceId),
+    dependsOnIdx: index('service_dependencies_depends_on_idx').on(table.dependsOnServiceId),
   }),
 );
 
@@ -356,6 +390,51 @@ export const incidentTimeline = pgTable(
   }),
 );
 
+// Alert Routing Rules
+export const alertRoutingRules = pgTable(
+  'alert_routing_rules',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    priority: integer('priority').default(0).notNull(), // Higher = evaluated first
+    enabled: boolean('enabled').default(true).notNull(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    // Conditions (JSONB for flexibility)
+    // Example: { labels: {key: value}, source: "grafana", severity: ["critical", "high"] }
+    conditions: jsonb('conditions').$type<Record<string, unknown>>(),
+    // Actions (JSONB)
+    // Example: { route_to_service_id: 1, set_severity: "critical", suppress: false, add_tags: ["tag1"] }
+    actions: jsonb('actions').$type<Record<string, unknown>>(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index('alert_routing_rules_team_idx').on(table.teamId),
+    priorityIdx: index('alert_routing_rules_priority_idx').on(table.priority),
+  }),
+);
+
+// Alert Routing Matches (tracks which rules matched alerts)
+export const alertRoutingMatches = pgTable(
+  'alert_routing_matches',
+  {
+    id: serial('id').primaryKey(),
+    alertId: integer('alert_id')
+      .notNull()
+      .references(() => alerts.id, { onDelete: 'cascade' }),
+    ruleId: integer('rule_id')
+      .notNull()
+      .references(() => alertRoutingRules.id, { onDelete: 'cascade' }),
+    matchedAt: timestamp('matched_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    alertIdx: index('alert_routing_matches_alert_idx').on(table.alertId),
+    ruleIdx: index('alert_routing_matches_rule_idx').on(table.ruleId),
+  }),
+);
+
 // Status Pages (Public-facing incident status)
 export const statusPages = pgTable('status_pages', {
   id: serial('id').primaryKey(),
@@ -367,6 +446,7 @@ export const statusPages = pgTable('status_pages', {
   description: text('description'),
   isPublic: boolean('is_public').default(true).notNull(),
   customDomain: varchar('custom_domain', { length: 255 }),
+  themeColor: varchar('theme_color', { length: 7 }).default('#6366f1'),
   logoUrl: varchar('logo_url', { length: 500 }),
   headerHtml: text('header_html'),
   footerHtml: text('footer_html'),
@@ -386,6 +466,19 @@ export const statusPageComponents = pgTable('status_page_components', {
   position: integer('position').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Status Page Services (linking services to status pages)
+export const statusPageServices = pgTable('status_page_services', {
+  id: serial('id').primaryKey(),
+  statusPageId: integer('status_page_id')
+    .notNull()
+    .references(() => statusPages.id, { onDelete: 'cascade' }),
+  serviceId: integer('service_id')
+    .notNull()
+    .references(() => services.id, { onDelete: 'cascade' }),
+  displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Status Page Incidents
@@ -431,6 +524,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   schedules: many(schedules),
   escalationPolicies: many(escalationPolicies),
   statusPages: many(statusPages),
+  alertRoutingRules: many(alertRoutingRules),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -446,6 +540,21 @@ export const servicesRelations = relations(services, ({ one, many }) => ({
   team: one(teams, { fields: [services.teamId], references: [teams.id] }),
   integrations: many(integrations),
   incidents: many(incidents),
+  dependencies: many(serviceDependencies, { relationName: 'serviceDependencies' }),
+  dependents: many(serviceDependencies, { relationName: 'dependentServices' }),
+}));
+
+export const serviceDependenciesRelations = relations(serviceDependencies, ({ one }) => ({
+  service: one(services, {
+    fields: [serviceDependencies.serviceId],
+    references: [services.id],
+    relationName: 'serviceDependencies',
+  }),
+  dependsOnService: one(services, {
+    fields: [serviceDependencies.dependsOnServiceId],
+    references: [services.id],
+    relationName: 'dependentServices',
+  }),
 }));
 
 export const incidentsRelations = relations(incidents, ({ one, many }) => ({
@@ -464,9 +573,10 @@ export const integrationsRelations = relations(integrations, ({ one }) => ({
   service: one(services, { fields: [integrations.serviceId], references: [services.id] }),
 }));
 
-export const alertsRelations = relations(alerts, ({ one }) => ({
+export const alertsRelations = relations(alerts, ({ one, many }) => ({
   incident: one(incidents, { fields: [alerts.incidentId], references: [incidents.id] }),
   integration: one(integrations, { fields: [alerts.integrationId], references: [integrations.id] }),
+  routingMatches: many(alertRoutingMatches),
 }));
 
 export const schedulesRelations = relations(schedules, ({ one, many }) => ({
@@ -496,6 +606,7 @@ export const scheduleOverridesRelations = relations(scheduleOverrides, ({ one })
 export const statusPagesRelations = relations(statusPages, ({ one, many }) => ({
   team: one(teams, { fields: [statusPages.teamId], references: [teams.id] }),
   components: many(statusPageComponents),
+  services: many(statusPageServices),
   incidents: many(statusPageIncidents),
 }));
 
@@ -522,6 +633,33 @@ export const statusPageUpdatesRelations = relations(statusPageUpdates, ({ one })
   incident: one(statusPageIncidents, {
     fields: [statusPageUpdates.incidentId],
     references: [statusPageIncidents.id],
+  }),
+}));
+
+export const statusPageServicesRelations = relations(statusPageServices, ({ one }) => ({
+  statusPage: one(statusPages, {
+    fields: [statusPageServices.statusPageId],
+    references: [statusPages.id],
+  }),
+  service: one(services, {
+    fields: [statusPageServices.serviceId],
+    references: [services.id],
+  }),
+}));
+
+export const alertRoutingRulesRelations = relations(alertRoutingRules, ({ one, many }) => ({
+  team: one(teams, { fields: [alertRoutingRules.teamId], references: [teams.id] }),
+  matches: many(alertRoutingMatches),
+}));
+
+export const alertRoutingMatchesRelations = relations(alertRoutingMatches, ({ one }) => ({
+  alert: one(alerts, {
+    fields: [alertRoutingMatches.alertId],
+    references: [alerts.id],
+  }),
+  rule: one(alertRoutingRules, {
+    fields: [alertRoutingMatches.ruleId],
+    references: [alertRoutingRules.id],
   }),
 }));
 
@@ -610,10 +748,14 @@ export type SystemSetting = typeof systemSettings.$inferSelect;
 export type NewSystemSetting = typeof systemSettings.$inferInsert;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type NewTeamMember = typeof teamMembers.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Service = typeof services.$inferSelect;
 export type NewService = typeof services.$inferInsert;
+export type ServiceDependency = typeof serviceDependencies.$inferSelect;
+export type NewServiceDependency = typeof serviceDependencies.$inferInsert;
 export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
 export type Incident = typeof incidents.$inferSelect;
@@ -632,3 +774,9 @@ export type Integration = typeof integrations.$inferSelect;
 export type NewIntegration = typeof integrations.$inferInsert;
 export type WebhookLog = typeof webhookLogs.$inferSelect;
 export type NewWebhookLog = typeof webhookLogs.$inferInsert;
+export type AlertRoutingRule = typeof alertRoutingRules.$inferSelect;
+export type NewAlertRoutingRule = typeof alertRoutingRules.$inferInsert;
+export type AlertRoutingMatch = typeof alertRoutingMatches.$inferSelect;
+export type NewAlertRoutingMatch = typeof alertRoutingMatches.$inferInsert;
+export type StatusPageService = typeof statusPageServices.$inferSelect;
+export type NewStatusPageService = typeof statusPageServices.$inferInsert;

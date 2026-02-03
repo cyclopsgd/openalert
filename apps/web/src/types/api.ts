@@ -2,12 +2,22 @@
 export type IncidentStatus = 'triggered' | 'acknowledged' | 'resolved'
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved' | 'suppressed'
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info'
+export type UserRole = 'superadmin' | 'admin' | 'responder' | 'observer'
+export type TeamRole = 'team_admin' | 'member' | 'observer'
 
 export interface User {
   id: number
   email: string
   name: string
   externalId: string
+  role: UserRole
+  authProvider?: string
+  isActive?: boolean
+  phoneNumber?: string
+  timezone?: string
+  lastLoginAt?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Service {

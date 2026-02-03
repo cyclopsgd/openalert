@@ -1,10 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
 import { alerts, integrations, Alert } from '../../database/schema';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { IncidentsService } from '../incidents/incidents.service';
+import { AlertRoutingService } from '../alert-routing/alert-routing.service';
 import { createHash } from 'crypto';
 
 @Injectable()
@@ -15,6 +16,8 @@ export class AlertsService {
     private readonly db: DatabaseService,
     private readonly incidentsService: IncidentsService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(forwardRef(() => AlertRoutingService))
+    private readonly alertRoutingService: AlertRoutingService,
   ) {}
 
   /**
@@ -50,19 +53,107 @@ export class AlertsService {
       return updated;
     }
 
-    // 4. Create or find incident
+    // 4. Evaluate routing rules (if team has any)
+    let targetServiceId = integration.serviceId;
+    let effectiveSeverity = payload.severity;
+    let shouldSuppress = false;
+    const additionalTags: string[] = [];
+
+    try {
+      if (integration.service && integration.service.teamId) {
+        // Create a temporary alert object for routing evaluation
+        const tempAlert = {
+          id: 0,
+          fingerprint,
+          integrationId: integration.id,
+          incidentId: null,
+          status: payload.status === 'resolved' ? 'resolved' : 'firing',
+          severity: payload.severity,
+          title: payload.title || payload.alertName || 'Alert',
+          description: payload.description,
+          source: payload.source || integration.name,
+          labels: payload.labels || {},
+          annotations: payload.annotations || {},
+          rawPayload: (payload.rawPayload || payload) as Record<string, unknown>,
+          firedAt: payload.startsAt ? new Date(payload.startsAt) : new Date(),
+          acknowledgedAt: null,
+          resolvedAt: null,
+          createdAt: new Date(),
+        } as Alert;
+
+        const routingResult = await this.alertRoutingService.evaluateRules(
+          tempAlert,
+          integration.service.teamId,
+        );
+
+        if (routingResult.matched && routingResult.actions.length > 0) {
+          const action = routingResult.actions[0]; // Apply first matching action
+
+          if (action.routeToServiceId) {
+            targetServiceId = action.routeToServiceId;
+            this.logger.log(
+              `Routing rule matched: routing alert to service ${targetServiceId}`,
+            );
+          }
+
+          if (action.setSeverity) {
+            effectiveSeverity = action.setSeverity as CreateAlertDto['severity'];
+            this.logger.log(`Routing rule matched: setting severity to ${effectiveSeverity}`);
+          }
+
+          if (action.suppress === true) {
+            shouldSuppress = true;
+            this.logger.log('Routing rule matched: suppressing alert');
+          }
+
+          if (action.addTags && Array.isArray(action.addTags)) {
+            additionalTags.push(...action.addTags);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error evaluating routing rules:', error);
+      // Continue with default behavior if routing fails
+    }
+
+    // If alert is suppressed, mark it as suppressed status
+    if (shouldSuppress) {
+      const [suppressedAlert] = await this.db.db
+        .insert(alerts)
+        .values({
+          fingerprint,
+          integrationId: integration.id,
+          incidentId: null,
+          status: 'suppressed',
+          severity: effectiveSeverity,
+          title: payload.title || payload.alertName || 'Alert',
+          description: payload.description,
+          source: payload.source || integration.name,
+          labels: payload.labels || {},
+          annotations: payload.annotations || {},
+          rawPayload: (payload.rawPayload || payload) as Record<string, unknown>,
+          firedAt: payload.startsAt ? new Date(payload.startsAt) : new Date(),
+          resolvedAt: null,
+        })
+        .returning();
+
+      this.logger.log(`Alert suppressed by routing rule: ${suppressedAlert.title}`);
+      return suppressedAlert;
+    }
+
+    // 5. Create or find incident
     let incidentId: number | null = null;
 
     if (payload.status !== 'resolved') {
       const incident = await this.incidentsService.findOrCreateForAlert({
-        serviceId: integration.serviceId,
-        severity: payload.severity,
+        serviceId: targetServiceId, // Use routed service ID
+        severity: effectiveSeverity, // Use effective severity
         title: payload.title || payload.alertName || 'Unnamed Alert',
       });
       incidentId = incident.id;
     }
 
-    // 5. Insert alert
+    // 6. Insert alert
     const [alert] = await this.db.db
       .insert(alerts)
       .values({
@@ -70,7 +161,7 @@ export class AlertsService {
         integrationId: integration.id,
         incidentId,
         status: payload.status === 'resolved' ? 'resolved' : 'firing',
-        severity: payload.severity,
+        severity: effectiveSeverity, // Use effective severity from routing
         title: payload.title || payload.alertName || 'Alert',
         description: payload.description,
         source: payload.source || integration.name,
@@ -86,10 +177,10 @@ export class AlertsService {
       `Ingested alert: ${alert.title} (${alert.severity}) for integration ${integration.name}`,
     );
 
-    // 6. Emit event for WebSocket broadcast
+    // 7. Emit event for WebSocket broadcast
     this.eventEmitter.emit('alert.created', alert);
 
-    // 7. If resolved, check if incident should auto-resolve
+    // 8. If resolved, check if incident should auto-resolve
     if (payload.status === 'resolved' && incidentId) {
       await this.incidentsService.autoResolve(incidentId);
     }
