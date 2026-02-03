@@ -18,9 +18,12 @@ import { IntegrationSettings } from '@/pages/settings/IntegrationSettings'
 import { EscalationPolicies } from '@/pages/settings/EscalationPolicies'
 import { NotificationSettings } from '@/pages/settings/NotificationSettings'
 import { TeamManagement } from '@/pages/settings/TeamManagement'
+import { AlertRoutingRules } from '@/pages/settings/AlertRoutingRules'
 import { Services } from '@/pages/Services'
 import { ServiceDetail } from '@/pages/ServiceDetail'
 import { ServiceForm } from '@/pages/ServiceForm'
+import { PublicStatus } from '@/pages/PublicStatus'
+import { StatusPages } from '@/pages/StatusPages'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -77,6 +80,7 @@ function AppContent() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/status/:slug" element={<PublicStatus />} />
           <Route
             path="/"
             element={
@@ -97,7 +101,7 @@ function AppContent() {
           <Route path="services/new" element={<ServiceForm />} />
           <Route path="services/:id" element={<ServiceDetail />} />
           <Route path="services/:id/edit" element={<ServiceForm />} />
-          <Route path="status-pages" element={<div className="text-center py-12 text-dark-400">Status Pages coming soon</div>} />
+          <Route path="status-pages" element={<StatusPages />} />
           <Route path="settings" element={<Settings />}>
             <Route index element={<Settings />} />
             <Route path="general" element={<GeneralSettings />} />
@@ -107,7 +111,7 @@ function AppContent() {
             <Route path="integrations" element={<IntegrationSettings />} />
             <Route path="escalation-policies" element={<EscalationPolicies />} />
             <Route path="notifications" element={<NotificationSettings />} />
-            <Route path="alert-routing" element={<div className="text-center py-12 text-dark-400">Alert Routing coming soon</div>} />
+            <Route path="alert-routing" element={<AlertRoutingRules />} />
           </Route>
         </Route>
         </Routes>
