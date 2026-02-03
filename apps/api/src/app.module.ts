@@ -13,6 +13,8 @@ import { SchedulesModule } from './modules/schedules/schedules.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { StatusPagesModule } from './modules/status-pages/status-pages.module';
 import { HealthModule } from './modules/health/health.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { HealthModule } from './modules/health/health.module';
     WebSocketModule,
     StatusPagesModule,
     HealthModule,
+    MetricsModule,
+    SystemSettingsModule,
   ],
   controllers: [],
   providers: [

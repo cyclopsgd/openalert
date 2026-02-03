@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
 import { users, User, NewUser } from '../../database/schema';
 
@@ -46,7 +46,7 @@ export class UsersService {
     phoneNumber?: string;
   }): Promise<User> {
     // Try to find by external ID first
-    let user = await this.findByExternalId(data.externalId);
+    const user = await this.findByExternalId(data.externalId);
 
     if (user) {
       // Update user info if changed
@@ -119,15 +119,68 @@ export class UsersService {
   }
 
   /**
-   * List users with pagination
+   * Activate user
    */
-  async list(params: { limit?: number; offset?: number } = {}) {
-    return this.db.db
+  async activate(id: number): Promise<User> {
+    return this.update(id, { isActive: true });
+  }
+
+  /**
+   * List users with pagination and filters
+   */
+  async list(
+    params: {
+      limit?: number;
+      offset?: number;
+      authProvider?: string;
+      isActive?: boolean;
+    } = {},
+  ) {
+    const conditions = [];
+
+    if (params.authProvider) {
+      conditions.push(eq(users.authProvider, params.authProvider));
+    }
+
+    if (params.isActive !== undefined) {
+      conditions.push(eq(users.isActive, params.isActive));
+    }
+
+    const query = this.db.db
       .select()
       .from(users)
       .limit(params.limit || 50)
       .offset(params.offset || 0)
       .orderBy(users.createdAt);
+
+    if (conditions.length > 0) {
+      return query.where(and(...conditions));
+    }
+
+    return query;
+  }
+
+  /**
+   * Initiate password reset for a local user
+   */
+  async initiatePasswordReset(id: number): Promise<{ message: string }> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User ${id} not found`);
+    }
+
+    if (user.authProvider !== 'local') {
+      throw new BadRequestException('Password reset is only available for local users');
+    }
+
+    // TODO: Generate reset token and send email
+    // For now, just log it
+    this.logger.log(`Password reset initiated for user ${id}: ${user.email}`);
+
+    return {
+      message: 'Password reset email sent (placeholder - email functionality not yet implemented)',
+    };
   }
 
   /**
