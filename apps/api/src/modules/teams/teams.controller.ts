@@ -52,7 +52,10 @@ export class TeamsController {
   }
 
   @Delete(':id/members/:userId')
-  removeMember(@Param('id', ParseIntPipe) id: number, @Param('userId', ParseIntPipe) userId: number) {
+  removeMember(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
     return this.teamsService.removeMember(id, userId);
   }
 

@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsOptional, IsInt, IsEnum, IsArray, ArrayUnique } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsInt,
+  IsEnum,
+  IsArray,
+  ArrayUnique,
+} from 'class-validator';
 
 export enum ServiceStatus {
   OPERATIONAL = 'operational',

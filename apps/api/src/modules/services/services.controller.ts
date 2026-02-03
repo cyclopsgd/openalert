@@ -48,10 +48,7 @@ export class ServicesController {
   }
 
   @Post(':id/dependencies')
-  addDependency(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() addDependencyDto: AddDependencyDto,
-  ) {
+  addDependency(@Param('id', ParseIntPipe) id: number, @Body() addDependencyDto: AddDependencyDto) {
     return this.servicesService.addDependency(id, addDependencyDto.dependsOnServiceId);
   }
 

@@ -8,7 +8,8 @@ import { users } from '../schema';
  * If no superadmin exists, promote the first user
  */
 async function ensureSuperadmin() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://openalert:openalert@localhost:5432/openalert';
+  const connectionString =
+    process.env.DATABASE_URL || 'postgresql://openalert:openalert@localhost:5432/openalert';
 
   const queryClient = postgres(connectionString);
   const db = drizzle(queryClient);

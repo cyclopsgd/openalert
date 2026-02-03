@@ -91,9 +91,7 @@ export class AlertsService {
 
           if (action.routeToServiceId) {
             targetServiceId = action.routeToServiceId;
-            this.logger.log(
-              `Routing rule matched: routing alert to service ${targetServiceId}`,
-            );
+            this.logger.log(`Routing rule matched: routing alert to service ${targetServiceId}`);
           }
 
           if (action.setSeverity) {

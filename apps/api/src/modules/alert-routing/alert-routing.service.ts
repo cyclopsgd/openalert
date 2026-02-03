@@ -179,9 +179,7 @@ export class AlertRoutingService {
 
     return {
       matches,
-      reason: matches
-        ? 'All conditions matched'
-        : 'One or more conditions did not match',
+      reason: matches ? 'All conditions matched' : 'One or more conditions did not match',
     };
   }
 
@@ -204,10 +202,7 @@ export class AlertRoutingService {
   /**
    * Evaluate conditions against an alert
    */
-  private evaluateConditions(
-    alert: Alert,
-    conditions: Record<string, unknown>,
-  ): boolean {
+  private evaluateConditions(alert: Alert, conditions: Record<string, unknown>): boolean {
     if (!conditions || Object.keys(conditions).length === 0) {
       return true; // No conditions = always match
     }
@@ -254,9 +249,7 @@ export class AlertRoutingService {
           return false;
         }
       } catch (error) {
-        this.logger.warn(
-          `Invalid regex in condition: ${conditions.descriptionMatches}`,
-        );
+        this.logger.warn(`Invalid regex in condition: ${conditions.descriptionMatches}`);
         return false;
       }
     }

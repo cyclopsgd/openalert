@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   X,
+  Server,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
@@ -46,6 +47,12 @@ const navItems: NavItem[] = [
     href: '/schedules',
     icon: Calendar,
     permission: 'schedules.view',
+  },
+  {
+    name: 'Services',
+    href: '/services',
+    icon: Server,
+    permission: 'services.view',
   },
   {
     name: 'Status Pages',

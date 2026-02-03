@@ -32,7 +32,11 @@ export class ServicesService {
     }
 
     // Verify team exists
-    const team = await this.db.select().from(teams).where(eq(teams.id, serviceData.teamId)).limit(1);
+    const team = await this.db
+      .select()
+      .from(teams)
+      .where(eq(teams.id, serviceData.teamId))
+      .limit(1);
     if (team.length === 0) {
       throw new NotFoundException(`Team with ID ${serviceData.teamId} not found`);
     }
@@ -242,7 +246,10 @@ export class ServicesService {
     }
 
     // Check for circular dependencies
-    const wouldCreateCircle = await this.wouldCreateCircularDependency(serviceId, dependsOnServiceId);
+    const wouldCreateCircle = await this.wouldCreateCircularDependency(
+      serviceId,
+      dependsOnServiceId,
+    );
     if (wouldCreateCircle) {
       throw new BadRequestException('This dependency would create a circular reference');
     }
@@ -264,10 +271,7 @@ export class ServicesService {
       .select()
       .from(serviceDependencies)
       .where(
-        and(
-          eq(serviceDependencies.serviceId, serviceId),
-          eq(serviceDependencies.id, dependencyId),
-        ),
+        and(eq(serviceDependencies.serviceId, serviceId), eq(serviceDependencies.id, dependencyId)),
       )
       .limit(1);
 
@@ -285,7 +289,9 @@ export class ServicesService {
 
     // Calculate health based on active incidents and dependency health
     const activeIncidentCount = service.activeIncidents.length;
-    const criticalIncidents = service.activeIncidents.filter((i) => i.severity === 'critical').length;
+    const criticalIncidents = service.activeIncidents.filter(
+      (i) => i.severity === 'critical',
+    ).length;
     const highIncidents = service.activeIncidents.filter((i) => i.severity === 'high').length;
 
     // Check dependency health
@@ -347,14 +353,21 @@ export class ServicesService {
     };
   }
 
-  private async buildDependencyGraph(serviceId: number, visited: Set<number> = new Set()): Promise<any> {
+  private async buildDependencyGraph(
+    serviceId: number,
+    visited: Set<number> = new Set(),
+  ): Promise<any> {
     if (visited.has(serviceId)) {
       return { circular: true };
     }
 
     visited.add(serviceId);
 
-    const [service] = await this.db.select().from(services).where(eq(services.id, serviceId)).limit(1);
+    const [service] = await this.db
+      .select()
+      .from(services)
+      .where(eq(services.id, serviceId))
+      .limit(1);
 
     if (!service) {
       return null;
@@ -370,7 +383,9 @@ export class ServicesService {
       .where(eq(serviceDependencies.serviceId, serviceId));
 
     const dependencyNodes = await Promise.all(
-      dependencies.map((dep) => this.buildDependencyGraph(dep.dependsOnServiceId, new Set(visited))),
+      dependencies.map((dep) =>
+        this.buildDependencyGraph(dep.dependsOnServiceId, new Set(visited)),
+      ),
     );
 
     return {

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AlertRoutingService } from './alert-routing.service';
@@ -69,9 +59,6 @@ export class AlertRoutingController {
   @Get('rules/:id/matches')
   @ApiOperation({ summary: 'Get alerts matched by a rule' })
   getRuleMatches(@Param('id') id: string, @Query('limit') limit?: string) {
-    return this.alertRoutingService.getMatchesByRule(
-      Number(id),
-      limit ? Number(limit) : 50,
-    );
+    return this.alertRoutingService.getMatchesByRule(Number(id), limit ? Number(limit) : 50);
   }
 }

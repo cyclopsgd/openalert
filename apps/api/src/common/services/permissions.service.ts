@@ -58,10 +58,7 @@ export class PermissionsService {
   /**
    * Check if user has team-level permission
    */
-  hasTeamPermission(
-    teamRole: TeamRole,
-    action: 'view' | 'edit' | 'manage_members',
-  ): boolean {
+  hasTeamPermission(teamRole: TeamRole, action: 'view' | 'edit' | 'manage_members'): boolean {
     switch (action) {
       case 'view':
         // All team members can view
