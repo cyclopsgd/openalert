@@ -50,12 +50,15 @@ export const users = pgTable(
   'users',
   {
     id: serial('id').primaryKey(),
-    externalId: varchar('external_id', { length: 255 }).notNull().unique(), // Entra ID oid
+    externalId: varchar('external_id', { length: 255 }).unique(), // Entra ID oid (nullable for local users)
     email: varchar('email', { length: 255 }).notNull().unique(),
     name: varchar('name', { length: 255 }).notNull(),
+    passwordHash: varchar('password_hash', { length: 255 }), // For local auth
+    authProvider: varchar('auth_provider', { length: 50 }).default('local'), // local, azure_ad, google, etc.
     phoneNumber: varchar('phone_number', { length: 50 }),
     timezone: varchar('timezone', { length: 100 }).default('UTC'),
     isActive: boolean('is_active').default(true).notNull(),
+    lastLoginAt: timestamp('last_login_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -64,6 +67,16 @@ export const users = pgTable(
     externalIdIdx: index('users_external_id_idx').on(table.externalId),
   }),
 );
+
+// System Settings
+export const systemSettings = pgTable('system_settings', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 255 }).notNull().unique(),
+  value: jsonb('value'),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // Team memberships
 export const teamMembers = pgTable(
@@ -526,6 +539,8 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
 }));
 
 // Type exports
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type NewSystemSetting = typeof systemSettings.$inferInsert;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
 export type User = typeof users.$inferSelect;

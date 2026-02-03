@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { LocalAuthService } from './local-auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MsalService } from './msal.service';
 import { UsersModule } from '../users/users.module';
@@ -22,7 +23,7 @@ import { UsersModule } from '../users/users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, MsalService],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, LocalAuthService, JwtStrategy, MsalService],
+  exports: [AuthService, LocalAuthService, JwtModule],
 })
 export class AuthModule {}

@@ -1,23 +1,43 @@
-import { Controller, Get, Query, Res, UseGuards, HttpCode, Post, Param } from '@nestjs/common';
+import { Controller, Get, Query, Res, UseGuards, HttpCode, Post, Param, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { LocalAuthService } from './local-auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { ConfigService } from '@nestjs/config';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly localAuthService: LocalAuthService,
     private readonly config: ConfigService,
   ) {}
 
+  @Post('register')
+  @Throttle({ default: { ttl: 60000, limit: 5 } }) // 5 registration attempts per minute
+  @ApiOperation({ summary: 'Register a new user with email and password' })
+  @HttpCode(201)
+  async register(@Body() dto: RegisterDto) {
+    return this.localAuthService.register(dto);
+  }
+
+  @Post('login/local')
+  @Throttle({ default: { ttl: 60000, limit: 10 } }) // 10 login attempts per minute
+  @ApiOperation({ summary: 'Login with email and password' })
+  @HttpCode(200)
+  async loginLocal(@Body() dto: LoginDto) {
+    return this.localAuthService.login(dto);
+  }
+
   @Get('login')
   @Throttle({ default: { ttl: 60000, limit: 10 } }) // 10 login attempts per minute
-  @ApiOperation({ summary: 'Initiate Azure AD login' })
+  @ApiOperation({ summary: 'Initiate Azure AD SSO login' })
   @ApiQuery({ name: 'redirect', required: false, description: 'Redirect URL after login' })
   async login(@Query('redirect') redirect: string, @Res() res: Response) {
     const redirectUri = `${this.config.get('API_URL', 'http://localhost:3001')}/auth/callback`;
