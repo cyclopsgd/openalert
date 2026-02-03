@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { eq } from 'drizzle-orm';
+import sgMail from '@sendgrid/mail';
 import { DatabaseService } from '../database/database.service';
 import { NotificationJobData } from './notification.queue';
 import { notificationLogs } from '../database/schema';
@@ -22,6 +23,15 @@ export class NotificationWorkerService implements OnModuleInit {
       port: config.get('REDIS_PORT', 6379),
       maxRetriesPerRequest: null,
     });
+
+    // Initialize SendGrid with API key
+    const sendgridApiKey = config.get<string>('SENDGRID_API_KEY');
+    if (sendgridApiKey) {
+      sgMail.setApiKey(sendgridApiKey);
+      this.logger.log('✅ SendGrid email service initialized');
+    } else {
+      this.logger.warn('⚠️  SENDGRID_API_KEY not configured - email notifications will fail');
+    }
   }
 
   async onModuleInit() {
@@ -112,15 +122,102 @@ export class NotificationWorkerService implements OnModuleInit {
     }
   }
 
-  // Stub implementations - these will be replaced with real integrations
-
+  /**
+   * Send email notification via SendGrid
+   */
   private async sendEmail(payload: NotificationJobData['payload']): Promise<void> {
-    this.logger.log(
-      `[STUB] Sending email to ${payload.email}: ${payload.subject}`,
-    );
-    // TODO: Integrate with SendGrid/AWS SES
-    // For now, just simulate success
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!payload.email) {
+      throw new Error('Email address is required for email notifications');
+    }
+
+    const fromEmail = this.config.get<string>('SENDGRID_FROM_EMAIL', 'alerts@openalert.io');
+    const fromName = this.config.get<string>('SENDGRID_FROM_NAME', 'OpenAlert');
+
+    const msg = {
+      to: payload.email,
+      from: {
+        email: fromEmail,
+        name: fromName,
+      },
+      subject: payload.subject || 'OpenAlert Incident Notification',
+      text: payload.message,
+      html: this.generateEmailHtml(payload),
+    };
+
+    try {
+      await sgMail.send(msg);
+      this.logger.log(`✅ Email sent successfully to ${payload.email}`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to send email to ${payload.email}:`, error);
+      throw new Error(`SendGrid error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Generate HTML email template for incident notifications
+   */
+  private generateEmailHtml(payload: NotificationJobData['payload']): string {
+    const incidentUrl = payload.incidentUrl || '#';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${payload.subject || 'Incident Alert'}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; max-width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 32px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                🚨 ${payload.subject || 'Incident Alert'}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <div style="color: #374151; font-size: 16px; line-height: 1.6;">
+                ${payload.message.replace(/\n/g, '<br>')}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Action Button -->
+          <tr>
+            <td style="padding: 0 32px 32px;">
+              <a href="${incidentUrl}"
+                 style="display: inline-block; padding: 12px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                View Incident Details
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #f9fafb; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                This is an automated notification from OpenAlert. Do not reply to this email.
+              </p>
+              <p style="margin: 8px 0 0; color: #9ca3af; font-size: 12px;">
+                © ${new Date().getFullYear()} OpenAlert. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
   }
 
   private async sendSms(payload: NotificationJobData['payload']): Promise<void> {
