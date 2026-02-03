@@ -120,3 +120,19 @@ export function useToast() {
       addToast({ type: 'info', title, description }),
   }
 }
+
+// Direct toast function for use outside React components
+export const toast = {
+  show: (toast: Omit<Toast, 'id'>) => useToastStore.getState().addToast(toast),
+  success: (title: string, description?: string) =>
+    useToastStore.getState().addToast({ type: 'success', title, description }),
+  error: (title: string, description?: string) =>
+    useToastStore.getState().addToast({ type: 'error', title, description }),
+  warning: (title: string, description?: string) =>
+    useToastStore.getState().addToast({ type: 'warning', title, description }),
+  info: (title: string, description?: string) =>
+    useToastStore.getState().addToast({ type: 'info', title, description }),
+}
+
+// Alias for backward compatibility
+export const showToast = toast.show
