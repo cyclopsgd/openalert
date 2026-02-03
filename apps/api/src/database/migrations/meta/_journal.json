@@ -8,6 +8,13 @@
       "when": 1769544989156,
       "tag": "0000_normal_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1770144297644,
+      "tag": "0001_misty_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }
