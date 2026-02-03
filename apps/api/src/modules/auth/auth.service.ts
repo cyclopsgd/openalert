@@ -49,7 +49,7 @@ export class AuthService {
         sub: user.id.toString(),
         email: user.email,
         name: user.name,
-        oid: user.externalId,
+        oid: user.externalId ?? undefined,
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -111,7 +111,7 @@ export class AuthService {
       sub: user.id.toString(),
       email: user.email,
       name: user.name,
-      oid: user.externalId,
+      oid: user.externalId ?? undefined,
     };
 
     return this.jwtService.sign(payload);
