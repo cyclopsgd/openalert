@@ -6,7 +6,22 @@
 
 @layer base {
   body {
-    @apply bg-dark-900 text-dark-100 font-sans antialiased;
+    @apply font-sans antialiased;
+    @apply bg-dark-900 text-dark-100;
+  }
+
+  /* Light mode overrides */
+  :root:not(.dark) body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  /* Ensure the root element has proper background */
+  html {
+    @apply bg-dark-900;
+  }
+
+  html:not(.dark) {
+    @apply bg-gray-50;
   }
 }
 
@@ -16,14 +31,98 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-dark-800;
+    @apply bg-dark-800 dark:bg-dark-800;
+  }
+
+  :root:not(.dark) .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-200;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-dark-600 rounded-full;
+    @apply bg-dark-600 rounded-full dark:bg-dark-600;
+  }
+
+  :root:not(.dark) .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-500;
+    @apply bg-dark-500 dark:bg-dark-500;
+  }
+
+  :root:not(.dark) .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+
+  /* Light mode text color utilities */
+  :root:not(.dark) .text-dark-50 {
+    @apply text-gray-900;
+  }
+
+  :root:not(.dark) .text-dark-100 {
+    @apply text-gray-800;
+  }
+
+  :root:not(.dark) .text-dark-200 {
+    @apply text-gray-700;
+  }
+
+  :root:not(.dark) .text-dark-300 {
+    @apply text-gray-600;
+  }
+
+  :root:not(.dark) .text-dark-400 {
+    @apply text-gray-500;
+  }
+
+  :root:not(.dark) .text-dark-500 {
+    @apply text-gray-400;
+  }
+
+  /* Light mode background color utilities */
+  :root:not(.dark) .bg-dark-900 {
+    @apply bg-white;
+  }
+
+  :root:not(.dark) .bg-dark-800 {
+    @apply bg-gray-100;
+  }
+
+  :root:not(.dark) .bg-dark-700 {
+    @apply bg-gray-200;
+  }
+
+  :root:not(.dark) .bg-dark-750 {
+    @apply bg-gray-150;
+  }
+
+  :root:not(.dark) .bg-dark-600 {
+    @apply bg-gray-300;
+  }
+
+  /* Light mode border color utilities */
+  :root:not(.dark) .border-dark-700 {
+    @apply border-gray-200;
+  }
+
+  :root:not(.dark) .border-dark-600 {
+    @apply border-gray-300;
+  }
+
+  :root:not(.dark) .border-dark-800 {
+    @apply border-gray-100;
+  }
+
+  /* Light mode hover states */
+  :root:not(.dark) .hover\:bg-dark-800:hover {
+    @apply bg-gray-100;
+  }
+
+  :root:not(.dark) .hover\:bg-dark-700:hover {
+    @apply bg-gray-200;
+  }
+
+  :root:not(.dark) .hover\:text-dark-50:hover {
+    @apply text-gray-900;
   }
 }
