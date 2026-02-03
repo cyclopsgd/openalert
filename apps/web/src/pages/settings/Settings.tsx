@@ -1,9 +1,15 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shield, Users, Settings as SettingsIcon } from 'lucide-react'
+import { Shield, Users, Settings as SettingsIcon, Building2, Webhook, GitBranch, UsersRound, ArrowRight, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const settingsNavItems = [
+  {
+    name: 'General',
+    href: '/settings/general',
+    icon: Building2,
+    description: 'Organization and preferences',
+  },
   {
     name: 'SSO Configuration',
     href: '/settings/sso',
@@ -15,6 +21,36 @@ const settingsNavItems = [
     href: '/settings/users',
     icon: Users,
     description: 'Manage users and permissions',
+  },
+  {
+    name: 'Teams',
+    href: '/settings/teams',
+    icon: UsersRound,
+    description: 'Manage teams and members',
+  },
+  {
+    name: 'Integrations',
+    href: '/settings/integrations',
+    icon: Webhook,
+    description: 'Webhooks and external integrations',
+  },
+  {
+    name: 'Escalation Policies',
+    href: '/settings/escalation-policies',
+    icon: ArrowRight,
+    description: 'Define escalation paths',
+  },
+  {
+    name: 'Notification Channels',
+    href: '/settings/notifications',
+    icon: Bell,
+    description: 'Email, SMS, and webhook settings',
+  },
+  {
+    name: 'Alert Routing',
+    href: '/settings/alert-routing',
+    icon: GitBranch,
+    description: 'Configure routing rules',
   },
 ]
 

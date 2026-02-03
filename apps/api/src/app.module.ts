@@ -10,11 +10,13 @@ import { QueuesModule } from './queues/queues.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
+import { EscalationPoliciesModule } from './modules/escalation-policies/escalation-policies.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { StatusPagesModule } from './modules/status-pages/status-pages.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 
 @Module({
   imports: [
@@ -48,11 +50,13 @@ import { SystemSettingsModule } from './modules/system-settings/system-settings.
     AlertsModule,
     IncidentsModule,
     SchedulesModule,
+    EscalationPoliciesModule,
     WebSocketModule,
     StatusPagesModule,
     HealthModule,
     MetricsModule,
     SystemSettingsModule,
+    IntegrationsModule,
   ],
   controllers: [],
   providers: [
