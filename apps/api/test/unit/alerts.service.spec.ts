@@ -3,6 +3,7 @@ import { AlertsService } from '../../src/modules/alerts/alerts.service';
 import { IncidentsService } from '../../src/modules/incidents/incidents.service';
 import { DatabaseService } from '../../src/database/database.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AlertStatus, AlertSeverity } from '../../src/modules/alerts/dto/create-alert.dto';
 
 describe('AlertsService', () => {
   let service: AlertsService;
@@ -100,8 +101,8 @@ describe('AlertsService', () => {
 
       const result = await service.ingestAlert('test-key', {
         alertName: 'Test Alert',
-        status: 'firing',
-        severity: 'high',
+        status: AlertStatus.FIRING,
+        severity: AlertSeverity.HIGH,
         source: 'test',
         labels: {},
       });
@@ -127,8 +128,8 @@ describe('AlertsService', () => {
       const newAlert = {
         id: 2,
         alertName: 'Test Alert',
-        status: 'firing',
-        severity: 'high',
+        status: AlertStatus.FIRING,
+        severity: AlertSeverity.HIGH,
       };
 
       mockDb.db.query.integrations.findFirst.mockResolvedValue(integration);
@@ -142,8 +143,8 @@ describe('AlertsService', () => {
 
       const result = await service.ingestAlert('test-key', {
         alertName: 'Test Alert',
-        status: 'firing',
-        severity: 'high',
+        status: AlertStatus.FIRING,
+        severity: AlertSeverity.HIGH,
         source: 'test',
         labels: {},
       });
@@ -180,7 +181,7 @@ describe('AlertsService', () => {
 
       await service.ingestAlert('test-key', {
         alertName: 'Test Alert',
-        status: 'resolved',
+        status: AlertStatus.RESOLVED,
         severity: 'high',
         source: 'test',
         labels: {},

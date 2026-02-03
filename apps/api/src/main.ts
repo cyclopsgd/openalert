@@ -83,9 +83,23 @@ async function bootstrap() {
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('OpenAlert API')
-    .setDescription('Incident Management Platform API')
-    .setVersion('1.0')
+    .setDescription('Incident Management Platform API - Complete Documentation')
+    .setVersion('1.0.0')
     .addBearerAuth()
+    .addTag('auth', 'Authentication & Authorization')
+    .addTag('incidents', 'Incident Management')
+    .addTag('alerts', 'Alert Management')
+    .addTag('schedules', 'On-Call Schedules')
+    .addTag('escalation-policies', 'Escalation Policies')
+    .addTag('services', 'Service Catalog')
+    .addTag('teams', 'Team Management')
+    .addTag('users', 'User Management')
+    .addTag('system-settings', 'System Configuration')
+    .addTag('metrics', 'Metrics & Analytics')
+    .addTag('status-pages', 'Status Pages')
+    .addTag('alert-routing', 'Alert Routing Rules')
+    .addTag('integrations', 'External Integrations')
+    .addTag('webhooks', 'Webhook Endpoints')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

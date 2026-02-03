@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { IncidentsController } from '../../src/modules/incidents/incidents.controller';
 import { IncidentsService } from '../../src/modules/incidents/incidents.service';
+import { IncidentStatusFilter } from '../../src/modules/incidents/dto/list-incidents.dto';
 
 describe('IncidentsController', () => {
   let controller: IncidentsController;
@@ -65,10 +66,10 @@ describe('IncidentsController', () => {
 
       mockIncidentsService.list.mockResolvedValue(mockIncidents);
 
-      await controller.list({ status: 'triggered' });
+      await controller.list({ status: IncidentStatusFilter.TRIGGERED });
 
       expect(service.list).toHaveBeenCalledWith({
-        status: 'triggered',
+        status: IncidentStatusFilter.TRIGGERED,
         serviceId: undefined,
         limit: 50,
         offset: 0,
@@ -150,7 +151,7 @@ describe('IncidentsController', () => {
 
       mockIncidentsService.acknowledge.mockResolvedValue(mockIncident);
 
-      const user = { id: 5, email: 'user@example.com', name: 'Test User' };
+      const user = { id: 5, email: 'user@example.com', name: 'Test User', externalId: 'ext-123', role: 'responder' };
       const result = await controller.acknowledge('1', {}, user);
 
       expect(result).toEqual(mockIncident);
@@ -160,7 +161,7 @@ describe('IncidentsController', () => {
     it('should pass correct user ID from current user', async () => {
       mockIncidentsService.acknowledge.mockResolvedValue({ id: 1 });
 
-      const user = { id: 42, email: 'admin@example.com', name: 'Admin' };
+      const user = { id: 42, email: 'admin@example.com', name: 'Admin', externalId: 'ext-42', role: 'admin' };
       await controller.acknowledge('10', {}, user);
 
       expect(service.acknowledge).toHaveBeenCalledWith(10, 42);
@@ -178,7 +179,7 @@ describe('IncidentsController', () => {
 
       mockIncidentsService.resolve.mockResolvedValue(mockIncident);
 
-      const user = { id: 5, email: 'user@example.com', name: 'Test User' };
+      const user = { id: 5, email: 'user@example.com', name: 'Test User', externalId: 'ext-123', role: 'responder' };
       const result = await controller.resolve('1', {}, user);
 
       expect(result).toEqual(mockIncident);
@@ -188,7 +189,7 @@ describe('IncidentsController', () => {
     it('should pass correct user ID from current user', async () => {
       mockIncidentsService.resolve.mockResolvedValue({ id: 1 });
 
-      const user = { id: 99, email: 'oncall@example.com', name: 'On-Call User' };
+      const user = { id: 99, email: 'oncall@example.com', name: 'On-Call User', externalId: 'ext-99', role: 'responder' };
       await controller.resolve('7', {}, user);
 
       expect(service.resolve).toHaveBeenCalledWith(7, 99);

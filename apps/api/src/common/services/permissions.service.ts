@@ -96,7 +96,7 @@ export class PermissionsService {
   /**
    * Check if user can change role
    */
-  canChangeRole(actorRole: UserRole, currentRole: UserRole, newRole: UserRole): boolean {
+  canChangeRole(actorRole: UserRole, currentRole: UserRole, _newRole: UserRole): boolean {
     // Only superadmin can change roles
     if (actorRole !== 'superadmin') {
       return false;

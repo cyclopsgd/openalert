@@ -188,7 +188,7 @@ async function seedTestData() {
         console.log(`Created incident #${incident.incidentNumber}: ${incident.title}`);
 
         // Create alert for this incident
-        const [alert] = await db
+        await db
           .insert(alerts)
           .values({
             fingerprint: `test-${incident.id}-${Date.now()}`,

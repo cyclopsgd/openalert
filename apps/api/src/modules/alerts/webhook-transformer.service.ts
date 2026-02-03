@@ -8,7 +8,7 @@ export class WebhookTransformerService {
   /**
    * Auto-detect webhook format and transform to standard format
    */
-  transform(payload: any, userAgent?: string): CreateAlertDto[] {
+  transform(payload: any, _userAgent?: string): CreateAlertDto[] {
     // Detect format based on payload structure
     if (payload.alerts && Array.isArray(payload.alerts)) {
       // Prometheus Alertmanager format

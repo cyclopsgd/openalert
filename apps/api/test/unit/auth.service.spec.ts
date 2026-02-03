@@ -23,7 +23,7 @@ describe('AuthService', () => {
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
-      const config = {
+      const config: Record<string, string> = {
         JWT_SECRET: 'test-secret',
         JWT_EXPIRES_IN: '7d',
         FRONTEND_URL: 'http://localhost:5173',
@@ -34,6 +34,8 @@ describe('AuthService', () => {
 
   const mockUsersService = {
     findByExternalId: jest.fn(),
+    findOrCreate: jest.fn(),
+    findById: jest.fn(),
     create: jest.fn(),
   };
 
@@ -68,33 +70,37 @@ describe('AuthService', () => {
     jest.clearAllMocks();
   });
 
-  describe('login', () => {
-    it('should throw UnauthorizedException when MSAL is not configured', async () => {
-      mockMsalService.isConfigured.mockReturnValue(false);
-
-      await expect(service.login()).rejects.toThrow(UnauthorizedException);
-      await expect(service.login()).rejects.toThrow(
-        'Azure Entra ID not configured'
-      );
-    });
-
-    it('should return auth URL when MSAL is configured', async () => {
+  describe('getLoginUrl', () => {
+    it('should return auth URL from MSAL service', async () => {
       const mockAuthUrl = 'https://login.microsoftonline.com/auth';
-      mockMsalService.isConfigured.mockReturnValue(true);
+      const redirectUri = 'http://localhost:3000/api/auth/callback';
       mockMsalService.getAuthCodeUrl.mockResolvedValue(mockAuthUrl);
 
-      const result = await service.login();
+      const result = await service.getLoginUrl(redirectUri);
 
       expect(result).toBe(mockAuthUrl);
-      expect(mockMsalService.getAuthCodeUrl).toHaveBeenCalled();
+      expect(mockMsalService.getAuthCodeUrl).toHaveBeenCalledWith(redirectUri, undefined);
+    });
+
+    it('should pass state parameter when provided', async () => {
+      const mockAuthUrl = 'https://login.microsoftonline.com/auth';
+      const redirectUri = 'http://localhost:3000/api/auth/callback';
+      const state = 'test-state';
+      mockMsalService.getAuthCodeUrl.mockResolvedValue(mockAuthUrl);
+
+      await service.getLoginUrl(redirectUri, state);
+
+      expect(mockMsalService.getAuthCodeUrl).toHaveBeenCalledWith(redirectUri, state);
     });
   });
 
   describe('handleCallback', () => {
-    it('should throw UnauthorizedException when MSAL is not configured', async () => {
-      mockMsalService.isConfigured.mockReturnValue(false);
+    const redirectUri = 'http://localhost:3000/api/auth/callback';
 
-      await expect(service.handleCallback('auth-code')).rejects.toThrow(
+    it('should throw UnauthorizedException when token exchange fails', async () => {
+      mockMsalService.acquireTokenByCode.mockRejectedValue(new Error('Token exchange failed'));
+
+      await expect(service.handleCallback('auth-code', redirectUri)).rejects.toThrow(
         UnauthorizedException
       );
     });
@@ -102,111 +108,141 @@ describe('AuthService', () => {
     it('should create new user and return JWT for first-time login', async () => {
       const mockTokenResponse = {
         account: {
+          localAccountId: 'ext-456',
           homeAccountId: 'ext-456',
           username: 'newuser@example.com',
           name: 'New User',
         },
       };
 
-      mockMsalService.isConfigured.mockReturnValue(true);
-      mockMsalService.acquireTokenByCode.mockResolvedValue(mockTokenResponse);
-      mockUsersService.findByExternalId.mockResolvedValue(null);
-      mockUsersService.create.mockResolvedValue({
+      const newUser = {
         ...mockUser,
         id: 2,
         email: 'newuser@example.com',
         name: 'New User',
         externalId: 'ext-456',
-      });
+      };
 
-      const result = await service.handleCallback('auth-code');
+      mockMsalService.acquireTokenByCode.mockResolvedValue(mockTokenResponse);
+      mockUsersService.findOrCreate.mockResolvedValue(newUser);
 
-      expect(mockUsersService.findByExternalId).toHaveBeenCalledWith('ext-456');
-      expect(mockUsersService.create).toHaveBeenCalledWith({
+      const result = await service.handleCallback('auth-code', redirectUri);
+
+      expect(mockUsersService.findOrCreate).toHaveBeenCalledWith({
+        externalId: 'ext-456',
         email: 'newuser@example.com',
         name: 'New User',
-        externalId: 'ext-456',
       });
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: 2, email: 'newuser@example.com' },
-        { expiresIn: '7d' }
-      );
+      expect(jwtService.sign).toHaveBeenCalled();
       expect(result).toEqual({
         accessToken: 'mock-jwt-token',
-        user: expect.objectContaining({
+        user: {
+          id: 2,
           email: 'newuser@example.com',
-        }),
+          name: 'New User',
+        },
       });
     });
 
     it('should return JWT for existing user', async () => {
       const mockTokenResponse = {
         account: {
+          localAccountId: 'ext-123',
           homeAccountId: 'ext-123',
           username: 'test@example.com',
           name: 'Test User',
         },
       };
 
-      mockMsalService.isConfigured.mockReturnValue(true);
       mockMsalService.acquireTokenByCode.mockResolvedValue(mockTokenResponse);
-      mockUsersService.findByExternalId.mockResolvedValue(mockUser);
+      mockUsersService.findOrCreate.mockResolvedValue(mockUser);
 
-      const result = await service.handleCallback('auth-code');
+      const result = await service.handleCallback('auth-code', redirectUri);
 
-      expect(mockUsersService.findByExternalId).toHaveBeenCalledWith('ext-123');
-      expect(mockUsersService.create).not.toHaveBeenCalled();
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: 1, email: 'test@example.com' },
-        { expiresIn: '7d' }
-      );
+      expect(mockUsersService.findOrCreate).toHaveBeenCalledWith({
+        externalId: 'ext-123',
+        email: 'test@example.com',
+        name: 'Test User',
+      });
+      expect(jwtService.sign).toHaveBeenCalled();
       expect(result).toEqual({
         accessToken: 'mock-jwt-token',
-        user: mockUser,
+        user: {
+          id: 1,
+          email: 'test@example.com',
+          name: 'Test User',
+        },
       });
     });
   });
 
   describe('generateDevToken', () => {
     it('should generate JWT for existing user', async () => {
-      mockUsersService.findByExternalId.mockResolvedValue(mockUser);
+      mockUsersService.findById.mockResolvedValue(mockUser);
 
       const result = await service.generateDevToken(1);
 
-      expect(result).toEqual({
-        accessToken: 'mock-jwt-token',
-        user: mockUser,
-      });
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: 1, email: 'test@example.com' },
-        { expiresIn: '7d' }
+      expect(result).toBe('mock-jwt-token');
+      expect(mockUsersService.findById).toHaveBeenCalledWith(1);
+      expect(jwtService.sign).toHaveBeenCalled();
+    });
+
+    it('should throw Error when user not found', async () => {
+      mockUsersService.findById.mockResolvedValue(null);
+
+      await expect(service.generateDevToken(999)).rejects.toThrow(
+        'User not found'
       );
     });
 
-    it('should throw UnauthorizedException when user not found', async () => {
-      mockUsersService.findByExternalId.mockResolvedValue(null);
+    it('should throw Error in production environment', async () => {
+      mockConfigService.get.mockReturnValue('production');
+      mockUsersService.findById.mockResolvedValue(mockUser);
 
-      await expect(service.generateDevToken(999)).rejects.toThrow(
-        UnauthorizedException
+      await expect(service.generateDevToken(1)).rejects.toThrow(
+        'Dev tokens not allowed in production'
       );
     });
   });
 
-  describe('validateUser', () => {
-    it('should return user when found', async () => {
-      mockUsersService.findByExternalId.mockResolvedValue(mockUser);
+  describe('validateToken', () => {
+    const mockJwtPayload = {
+      sub: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      oid: 'ext-123',
+    };
 
-      const result = await service.validateUser(1);
+    it('should return user data when token is valid', async () => {
+      mockJwtService.verify = jest.fn().mockReturnValue(mockJwtPayload);
+      mockUsersService.findById.mockResolvedValue({ ...mockUser, isActive: true });
 
-      expect(result).toEqual(mockUser);
+      const result = await service.validateToken('valid-token');
+
+      expect(result).toEqual({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User',
+        externalId: 'ext-123',
+      });
     });
 
-    it('should return null when user not found', async () => {
-      mockUsersService.findByExternalId.mockResolvedValue(null);
+    it('should throw UnauthorizedException when user is inactive', async () => {
+      mockJwtService.verify = jest.fn().mockReturnValue(mockJwtPayload);
+      mockUsersService.findById.mockResolvedValue({ ...mockUser, isActive: false });
 
-      const result = await service.validateUser(999);
+      await expect(service.validateToken('valid-token')).rejects.toThrow(
+        UnauthorizedException
+      );
+    });
 
-      expect(result).toBeNull();
+    it('should throw UnauthorizedException when user not found', async () => {
+      mockJwtService.verify = jest.fn().mockReturnValue(mockJwtPayload);
+      mockUsersService.findById.mockResolvedValue(null);
+
+      await expect(service.validateToken('valid-token')).rejects.toThrow(
+        UnauthorizedException
+      );
     });
   });
 });

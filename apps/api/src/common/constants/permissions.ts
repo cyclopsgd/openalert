@@ -82,8 +82,8 @@ export type Permission = keyof typeof PERMISSIONS;
  * Check if a role has a specific permission
  */
 export function hasPermission(role: UserRole, permission: Permission): boolean {
-  const allowedRoles = PERMISSIONS[permission];
-  return allowedRoles ? allowedRoles.includes(role) : false;
+  const allowedRoles = PERMISSIONS[permission] as readonly string[];
+  return allowedRoles ? (allowedRoles as readonly string[]).includes(role) : false;
 }
 
 /**
@@ -104,7 +104,7 @@ export function canPerformAction(
 export function getRolePermissions(role: UserRole): Permission[] {
   const permissions: Permission[] = [];
   for (const [permission, roles] of Object.entries(PERMISSIONS)) {
-    if (roles.includes(role)) {
+    if ((roles as readonly string[]).includes(role)) {
       permissions.push(permission as Permission);
     }
   }
