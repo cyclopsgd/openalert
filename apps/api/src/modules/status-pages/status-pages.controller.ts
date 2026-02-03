@@ -11,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { TeamMemberGuard } from '../../common/guards/team-member.guard';
+import { TeamResourceDecorator } from '../../common/decorators/team-resource.decorator';
+import { RequireTeamRoles } from '../../common/decorators/require-team-roles.decorator';
 import {
   StatusPagesService,
   CreateStatusPageDto,
@@ -52,6 +55,8 @@ export class StatusPagesManagementController {
   }
 
   @Get(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('status-page')
   @ApiOperation({ summary: 'Get status page by ID' })
   getStatusPage(@Param('id') id: string) {
     return this.statusPagesService.findById(Number(id));
@@ -64,12 +69,18 @@ export class StatusPagesManagementController {
   }
 
   @Patch(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('status-page')
+  @RequireTeamRoles(['admin', 'owner'])
   @ApiOperation({ summary: 'Update status page' })
   updateStatusPage(@Param('id') id: string, @Body() dto: UpdateStatusPageDto) {
     return this.statusPagesService.update(Number(id), dto);
   }
 
   @Delete(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('status-page')
+  @RequireTeamRoles(['admin', 'owner'])
   @ApiOperation({ summary: 'Delete status page' })
   deleteStatusPage(@Param('id') id: string) {
     return this.statusPagesService.delete(Number(id));

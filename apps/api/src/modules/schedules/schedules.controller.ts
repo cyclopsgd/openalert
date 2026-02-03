@@ -11,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { TeamMemberGuard } from '../../common/guards/team-member.guard';
+import { TeamResourceDecorator } from '../../common/decorators/team-resource.decorator';
+import { RequireTeamRoles } from '../../common/decorators/require-team-roles.decorator';
 import { SchedulesService, CreateScheduleDto, UpdateScheduleDto } from './schedules.service';
 import { RotationsService, CreateRotationDto, UpdateRotationDto } from './rotations.service';
 import { OverridesService, CreateOverrideDto, UpdateOverrideDto } from './overrides.service';
@@ -37,6 +40,8 @@ export class SchedulesController {
   }
 
   @Get(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
   @ApiOperation({ summary: 'Get schedule by ID' })
   getSchedule(@Param('id') id: string) {
     return this.schedulesService.findById(Number(id));
@@ -49,12 +54,18 @@ export class SchedulesController {
   }
 
   @Patch(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
+  @RequireTeamRoles(['admin', 'owner'])
   @ApiOperation({ summary: 'Update schedule' })
   updateSchedule(@Param('id') id: string, @Body() dto: UpdateScheduleDto) {
     return this.schedulesService.update(Number(id), dto);
   }
 
   @Delete(':id')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
+  @RequireTeamRoles(['admin', 'owner'])
   @ApiOperation({ summary: 'Delete schedule' })
   deleteSchedule(@Param('id') id: string) {
     return this.schedulesService.delete(Number(id));
@@ -63,6 +74,8 @@ export class SchedulesController {
   // === On-Call Resolution ===
 
   @Get(':id/oncall')
+  @UseGuards(TeamMemberGuard)
+  @TeamResourceDecorator('schedule')
   @ApiOperation({ summary: 'Get who is currently on call for this schedule' })
   getOnCall(
     @Param('id') id: string,
