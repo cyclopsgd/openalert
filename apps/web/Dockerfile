@@ -19,8 +19,8 @@ RUN rm -rf src/**/__tests__
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-# Build (skip type checking for faster build)
-RUN npm run build -- --mode production
+# Build (skip TypeScript checking - build with Vite only)
+RUN npx vite build --mode production
 
 # Production image - serve with nginx
 FROM nginx:alpine
