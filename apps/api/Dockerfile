@@ -1,4 +1,5 @@
 # OpenAlert Backend Dockerfile for Fly.io
+# Build from apps/api directory
 
 FROM node:20-alpine AS builder
 
@@ -6,17 +7,14 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
 
 # Install dependencies
-RUN npm ci --workspace=apps/api
+RUN npm ci
 
-# Copy source
-COPY apps/api ./apps/api
-COPY tsconfig.json ./
+# Copy source code
+COPY . .
 
 # Build
-WORKDIR /app/apps/api
 RUN npm run build
 
 # Production image
@@ -24,18 +22,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install production dependencies
 COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
+RUN npm ci --omit=dev
 
-# Install production dependencies only
-RUN npm ci --workspace=apps/api --omit=dev
+# Copy built application
+COPY --from=builder /app/dist ./dist
 
-# Copy built files
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY apps/api/drizzle ./apps/api/drizzle
+# Copy migrations and schema
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/src/database/schema ./src/database/schema
 
-WORKDIR /app/apps/api
+# Copy drizzle config
+COPY drizzle.config.ts ./
 
 EXPOSE 3001
 
