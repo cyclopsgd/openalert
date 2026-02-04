@@ -185,7 +185,7 @@ export class TeamsService {
       .values({
         teamId,
         userId: addMemberDto.userId,
-        role: addMemberDto.role || 'member',
+        teamRole: addMemberDto.role || 'member',
       })
       .returning();
 
@@ -230,7 +230,7 @@ export class TeamsService {
     const teamData = await this.findOne(teamId);
     const adminCount = teamData.members.filter((m: any) => m.role === 'team_admin').length;
 
-    if (member.role === 'team_admin' && adminCount <= 1) {
+    if (member.teamRole === 'team_admin' && adminCount <= 1) {
       throw new BadRequestException('Cannot remove the last admin from the team');
     }
 
@@ -256,7 +256,7 @@ export class TeamsService {
     }
 
     // If demoting from admin, check if this is the last admin
-    if (member.role === 'team_admin' && role !== 'team_admin') {
+    if (member.teamRole === 'team_admin' && role !== 'team_admin') {
       const teamData = await this.findOne(teamId);
       const adminCount = teamData.members.filter((m: any) => m.role === 'team_admin').length;
 
@@ -267,7 +267,7 @@ export class TeamsService {
 
     // Update role
     await this.db.db.update(teamMembers)
-      .set({ role })
+      .set({ teamRole: role })
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
     // Return updated member with user details
