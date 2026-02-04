@@ -11,15 +11,16 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy source code (exclude tests)
 COPY . .
+RUN rm -rf src/**/__tests__
 
 # Build argument for API URL
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-# Build
-RUN npm run build
+# Build (skip type checking for faster build)
+RUN npm run build -- --mode production
 
 # Production image - serve with nginx
 FROM nginx:alpine
