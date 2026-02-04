@@ -225,3 +225,7 @@ See Grafana analysis for implementation details.
 1. Review and test all new features
 2. Merge `feature/frontend-improvements` to `main`
 3. Deploy to production!
+
+### Important TODOs
+- **📋 Dockerfile Improvements:** See `TODO_DOCKERFILE_IMPROVEMENTS.md` for production fixes needed
+- Current Dockerfiles use workarounds for quick deployment - work for testing, need improvement for production
