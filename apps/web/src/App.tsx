@@ -135,9 +135,9 @@ function AppContent() {
           </Route>
           </Routes>
         </Suspense>
+        <ToastContainer />
+        <KeyboardShortcutsHelp />
       </BrowserRouter>
-      <ToastContainer />
-      <KeyboardShortcutsHelp />
     </>
   )
 }
