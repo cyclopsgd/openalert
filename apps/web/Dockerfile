@@ -1,4 +1,5 @@
 # OpenAlert Frontend Dockerfile for Fly.io
+# Build from apps/web directory
 
 FROM node:20-alpine AS builder
 
@@ -6,28 +7,24 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY apps/web/package*.json ./apps/web/
 
 # Install dependencies
-RUN npm ci --workspace=apps/web
+RUN npm install
 
-# Copy source
-COPY apps/web ./apps/web
-COPY tsconfig.json ./
+# Copy source code
+COPY . .
 
-# Build
-WORKDIR /app/apps/web
-
-# Build argument for API URL (will be set during deployment)
+# Build argument for API URL
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
+# Build
 RUN npm run build
 
 # Production image - serve with nginx
 FROM nginx:alpine
 
-COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Custom nginx config for SPA
 RUN echo 'server { \
