@@ -52,6 +52,12 @@ const queryClient = new QueryClient({
   },
 })
 
+function KeyboardShortcutsProvider() {
+  const { isAuthenticated } = useAuthStore()
+  useKeyboardShortcuts({ enabled: isAuthenticated })
+  return null
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore()
 
@@ -67,10 +73,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { fetchProfile, isAuthenticated } = useAuthStore()
+  const { fetchProfile } = useAuthStore()
   const { theme } = useUIStore()
-
-  useKeyboardShortcuts({ enabled: isAuthenticated })
 
   useEffect(() => {
     const token = localStorage.getItem('authToken')
@@ -91,6 +95,7 @@ function AppContent() {
     <>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
+          <KeyboardShortcutsProvider />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/status/:slug" element={<PublicStatus />} />
