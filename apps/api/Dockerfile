@@ -29,12 +29,11 @@ RUN npm install --omit=dev
 # Copy built application
 COPY --from=builder /app/dist ./dist
 
-# Copy migrations and schema
+# Copy migrations (schema is already in dist)
 COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/src/database/schema ./src/database/schema
 
 # Copy drizzle config
-COPY drizzle.config.ts ./
+COPY --from=builder /app/drizzle.config.ts ./
 
 EXPOSE 3001
 
