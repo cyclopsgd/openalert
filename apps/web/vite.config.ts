@@ -10,6 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    host: true, // Listen on all network interfaces (0.0.0.0)
+    port: 5175,
+  },
   build: {
     // Reduce chunk size limit to ensure smaller bundles
     chunkSizeWarningLimit: 500,
