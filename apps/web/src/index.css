@@ -78,15 +78,15 @@
   }
 
   :root:not(.dark) .text-dark-300 {
-    @apply text-gray-600;
+    @apply text-gray-700;
   }
 
   :root:not(.dark) .text-dark-400 {
-    @apply text-gray-500;
+    @apply text-gray-600;
   }
 
   :root:not(.dark) .text-dark-500 {
-    @apply text-gray-400;
+    @apply text-gray-500;
   }
 
   /* Light mode background color utilities */

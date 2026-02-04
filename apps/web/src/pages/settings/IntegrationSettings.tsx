@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { apiClient } from '@/lib/api/client'
 
 interface Integration {
   id: number
@@ -54,15 +55,8 @@ export function IntegrationSettings() {
 
   const fetchIntegrations = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/integrations', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setIntegrations(data)
-      }
+      const response = await apiClient.get('/integrations')
+      setIntegrations(response.data)
     } catch (error) {
       console.error('Failed to fetch integrations:', error)
     } finally {
@@ -72,18 +66,8 @@ export function IntegrationSettings() {
 
   const fetchWebhookLogs = async (integrationId: number) => {
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/integrations/${integrationId}/webhook-logs`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        }
-      )
-      if (response.ok) {
-        const data = await response.json()
-        setWebhookLogs(data)
-      }
+      const response = await apiClient.get(`/integrations/${integrationId}/webhook-logs`)
+      setWebhookLogs(response.data)
     } catch (error) {
       console.error('Failed to fetch webhook logs:', error)
     }
@@ -91,23 +75,13 @@ export function IntegrationSettings() {
 
   const handleCreate = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/integrations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(newIntegration),
-      })
-
-      if (response.ok) {
-        const created = await response.json()
-        setIntegrations([...integrations, created])
-        setShowCreateModal(false)
-        setNewIntegration({ name: '', type: 'webhook', serviceId: 1 })
-      }
+      const response = await apiClient.post('/integrations', newIntegration)
+      setIntegrations([...integrations, response.data])
+      setShowCreateModal(false)
+      setNewIntegration({ name: '', type: 'webhook', serviceId: 1 })
     } catch (error) {
       console.error('Failed to create integration:', error)
+      alert('Failed to create integration. Please check console for details.')
     }
   }
 
@@ -115,22 +89,15 @@ export function IntegrationSettings() {
     if (!confirm('Are you sure you want to delete this integration?')) return
 
     try {
-      const response = await fetch(`http://localhost:3001/api/integrations/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      })
-
-      if (response.ok) {
-        setIntegrations(integrations.filter((i) => i.id !== id))
-        if (selectedIntegration?.id === id) {
-          setSelectedIntegration(null)
-          setWebhookLogs([])
-        }
+      await apiClient.delete(`/integrations/${id}`)
+      setIntegrations(integrations.filter((i) => i.id !== id))
+      if (selectedIntegration?.id === id) {
+        setSelectedIntegration(null)
+        setWebhookLogs([])
       }
     } catch (error) {
       console.error('Failed to delete integration:', error)
+      alert('Failed to delete integration. Please check console for details.')
     }
   }
 
@@ -138,25 +105,14 @@ export function IntegrationSettings() {
     if (!confirm('Are you sure? This will invalidate the current webhook URL.')) return
 
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/integrations/${id}/regenerate-key`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        }
-      )
-
-      if (response.ok) {
-        const updated = await response.json()
-        setIntegrations(integrations.map((i) => (i.id === id ? updated : i)))
-        if (selectedIntegration?.id === id) {
-          setSelectedIntegration(updated)
-        }
+      const response = await apiClient.post(`/integrations/${id}/regenerate-key`)
+      setIntegrations(integrations.map((i) => (i.id === id ? response.data : i)))
+      if (selectedIntegration?.id === id) {
+        setSelectedIntegration(response.data)
       }
     } catch (error) {
       console.error('Failed to regenerate key:', error)
+      alert('Failed to regenerate key. Please check console for details.')
     }
   }
 
@@ -167,8 +123,8 @@ export function IntegrationSettings() {
   }
 
   const getWebhookUrl = (integration: Integration) => {
-    const baseUrl = window.location.origin.replace('5173', '3001')
-    return `${baseUrl}/api/webhooks/${integration.type}/${integration.integrationKey}`
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    return `${apiUrl}/webhooks/${integration.type}/${integration.integrationKey}`
   }
 
   if (loading) {
