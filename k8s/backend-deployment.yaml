@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: openalert
+  labels:
+    app: openalert
+    component: backend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: openalert
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: openalert
+        component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+        prometheus.io/path: "/api/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+      initContainers:
+        # Wait for PostgreSQL to be ready
+        - name: wait-for-postgres
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-service -p 5432 -U $(cat /secrets/POSTGRES_USER); do
+                echo "Waiting for PostgreSQL to be ready..."
+                sleep 2
+              done
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: openalert-secrets
+                  key: POSTGRES_USER
+
+        # Wait for Redis to be ready
+        - name: wait-for-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis-service -p 6379 ping; do
+                echo "Waiting for Redis to be ready..."
+                sleep 2
+              done
+
+        # Run database migrations
+        - name: run-migrations
+          image: openalert/backend:latest  # Update with your registry
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running database migrations..."
+              cd /app/apps/api && npx drizzle-kit push:pg
+          envFrom:
+            - configMapRef:
+                name: openalert-config
+            - secretRef:
+                name: openalert-secrets
+
+      containers:
+        - name: backend
+          image: openalert/backend:latest  # Update with your registry
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 3001
+              name: http
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: openalert-config
+            - secretRef:
+                name: openalert-secrets
+
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 3001
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 3001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - sleep 10  # Allow time for graceful shutdown
+
+      # Ensure pods are distributed across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: component
+                      operator: In
+                      values:
+                        - backend
+                topologyKey: kubernetes.io/hostname
+
+      # Graceful termination
+      terminationGracePeriodSeconds: 30

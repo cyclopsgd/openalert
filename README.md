@@ -29,7 +29,8 @@ OpenAlert is a production-ready incident management and on-call scheduling platf
 - **Incident Updates**: Public incident timeline with updates
 - **Scheduled Maintenance**: Plan and communicate maintenance windows
 
-### Production Ready
+### Performance & Reliability
+- **Redis Caching**: Intelligent caching layer for frequently accessed data
 - **Health Checks**: Kubernetes liveness and readiness probes
 - **Prometheus Metrics**: MTTA, MTTR, active incidents, and system metrics
 - **Docker Support**: Production-optimized multi-stage builds
@@ -40,7 +41,7 @@ OpenAlert is a production-ready incident management and on-call scheduling platf
 - **Runtime**: Node.js 20+ with TypeScript (strict mode)
 - **Framework**: NestJS with Fastify adapter
 - **Database**: PostgreSQL 15+ with Drizzle ORM
-- **Cache/Queue**: Redis 7+ with BullMQ
+- **Cache/Queue**: Redis 7+ with BullMQ (caching + job queues)
 - **Real-time**: Socket.IO with Redis adapter
 - **Authentication**: Azure Entra ID (MSAL) + JWT
 - **Containerization**: Docker + Docker Compose
@@ -331,12 +332,37 @@ npm run test:cov
 3. Calculate current on-call based on rotation type
 4. Return on-call user with context
 
+## Performance
+
+### Redis Caching
+
+OpenAlert implements an intelligent Redis caching layer to improve performance and reduce database load:
+
+- **Automated caching** for frequently accessed data (incidents, metrics, services)
+- **Smart invalidation** on data changes
+- **Graceful fallback** if Redis is unavailable
+- **Configurable TTL** per data type
+- **Cache statistics** via health endpoint
+
+Key cached data types:
+- Incidents list (30s TTL)
+- Dashboard metrics (60s TTL)
+- Services catalog (2min TTL)
+- Alert routing rules (2min TTL)
+- Status pages (1min TTL)
+- On-call schedules (5min TTL)
+
+View cache stats: `GET /health/cache/stats`
+
+For detailed caching documentation, see **[CACHING.md](docs/CACHING.md)**
+
 ## Documentation
 
 For comprehensive backend documentation:
 
 - **[BACKEND-API.md](docs/BACKEND-API.md)** - Complete API reference with request/response examples
 - **[BACKEND-DEEP-DIVE.md](docs/BACKEND-DEEP-DIVE.md)** - In-depth architecture, modules, database schema, and implementation details
+- **[CACHING.md](docs/CACHING.md)** - Redis caching strategy, configuration, and monitoring
 
 ## License
 

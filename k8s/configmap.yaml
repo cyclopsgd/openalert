@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openalert-config
+  namespace: openalert
+  labels:
+    app: openalert
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  CACHE_ENABLED: "true"
+  REDIS_CACHE_TTL_DEFAULT: "60"
+
+  # PostgreSQL Configuration
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "openalert"
+
+  # Application URLs
+  API_URL: "https://your-domain.com/api"
+  FRONTEND_URL: "https://your-domain.com"
+
+  # Email Configuration
+  SENDGRID_FROM_NAME: "OpenAlert"
+
+  # Features
+  ENABLE_METRICS: "true"
+  ENABLE_TRACING: "false"
+  LOG_LEVEL: "info"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: openalert
+  labels:
+    app: openalert
+    component: postgres
+data:
+  init.sql: |
+    -- Initialize database with extensions
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+    -- Performance optimizations
+    ALTER SYSTEM SET max_connections = 200;
+    ALTER SYSTEM SET shared_buffers = '1GB';
+    ALTER SYSTEM SET effective_cache_size = '3GB';
+    ALTER SYSTEM SET maintenance_work_mem = '256MB';
+    ALTER SYSTEM SET checkpoint_completion_target = 0.9;
+    ALTER SYSTEM SET wal_buffers = '16MB';
+    ALTER SYSTEM SET default_statistics_target = 100;
+    ALTER SYSTEM SET random_page_cost = 1.1;
+    ALTER SYSTEM SET effective_io_concurrency = 200;
+    ALTER SYSTEM SET work_mem = '5MB';
+    ALTER SYSTEM SET min_wal_size = '1GB';
+    ALTER SYSTEM SET max_wal_size = '4GB';

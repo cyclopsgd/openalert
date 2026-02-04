@@ -1,0 +1,76 @@
+# ====================================
+# Build Stage
+# ====================================
+FROM node:20-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files for better layer caching
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci --verbose
+
+# Copy source code
+COPY apps/api ./apps/api
+COPY tsconfig.json ./
+
+# Build the application
+RUN npm run build -w @openalert/api
+
+# ====================================
+# Production Stage
+# ====================================
+FROM node:20-alpine AS production
+
+# Security: Install dumb-init for proper signal handling and security updates
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    && apk upgrade --no-cache
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Copy package files
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+
+# Install only production dependencies
+RUN npm ci --only=production --ignore-scripts && \
+    npm cache clean --force
+
+# Copy built application from builder
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+
+# Copy necessary runtime files
+COPY --from=builder /app/apps/api/drizzle.config.ts ./apps/api/
+COPY --from=builder /app/apps/api/src/database/migrations ./apps/api/src/database/migrations
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Expose application port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/health/live', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Use dumb-init to handle signals properly (PID 1 handling)
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start application
+CMD ["node", "apps/api/dist/main.js"]
