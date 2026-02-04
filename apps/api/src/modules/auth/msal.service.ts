@@ -1,57 +1,112 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 import * as msal from '@azure/msal-node';
 
 @Injectable()
-export class MsalService {
+export class MsalService implements OnModuleInit {
   private readonly logger = new Logger(MsalService.name);
-  private msalClient: msal.ConfidentialClientApplication;
+  private msalClient: msal.ConfidentialClientApplication | null = null;
+  private isInitialized = false;
 
-  constructor(private readonly config: ConfigService) {
-    const clientId = config.get<string>('AZURE_CLIENT_ID', 'dev-client-id');
-    const clientSecret = config.get<string>('AZURE_CLIENT_SECRET', 'dev-client-secret');
-    const tenantId = config.get<string>('AZURE_TENANT_ID', 'common');
+  constructor(
+    private readonly config: ConfigService,
+    private readonly systemSettings: SystemSettingsService,
+  ) {}
 
-    // Skip MSAL initialization if credentials are not configured (dev mode)
-    if (clientId === 'dev-client-id' && clientSecret === 'dev-client-secret') {
-      this.logger.warn(
-        'Azure Entra ID credentials not configured. SSO login will not work. Use /auth/dev-token/:userId for testing.',
-      );
-      return;
-    }
+  /**
+   * Initialize MSAL client on module initialization
+   */
+  async onModuleInit() {
+    await this.initializeMsal();
+  }
 
-    const msalConfig: msal.Configuration = {
-      auth: {
-        clientId,
-        authority: `https://login.microsoftonline.com/${tenantId}`,
-        clientSecret,
-      },
-      system: {
-        loggerOptions: {
-          loggerCallback: (level, message, containsPii) => {
-            if (containsPii) return;
-            switch (level) {
-              case msal.LogLevel.Error:
-                this.logger.error(message);
-                break;
-              case msal.LogLevel.Warning:
-                this.logger.warn(message);
-                break;
-              case msal.LogLevel.Info:
-                this.logger.log(message);
-                break;
-              case msal.LogLevel.Verbose:
-                this.logger.debug(message);
-                break;
-            }
-          },
-          piiLoggingEnabled: false,
-          logLevel: msal.LogLevel.Warning,
+  /**
+   * Initialize or reinitialize the MSAL client with config from database
+   */
+  async initializeMsal(): Promise<void> {
+    try {
+      // Try to get config from database first
+      const dbConfig = await this.systemSettings.getSSOConfig();
+
+      let clientId: string;
+      let clientSecret: string;
+      let tenantId: string;
+
+      // If SSO is enabled in DB and has credentials, use those
+      if (dbConfig.ssoEnabled && dbConfig.clientId) {
+        clientId = dbConfig.clientId;
+        // Get the actual secret (not masked) from database
+        const secretSetting = await this.systemSettings.getByKey('sso.azure_ad.client_secret');
+        clientSecret = secretSetting?.value as string || 'dev-client-secret';
+        tenantId = dbConfig.tenantId || 'common';
+        this.logger.log('Using Azure AD configuration from database');
+      } else {
+        // Fall back to environment variables for backwards compatibility
+        clientId = this.config.get<string>('AZURE_CLIENT_ID', 'dev-client-id');
+        clientSecret = this.config.get<string>('AZURE_CLIENT_SECRET', 'dev-client-secret');
+        tenantId = this.config.get<string>('AZURE_TENANT_ID', 'common');
+        this.logger.log('Using Azure AD configuration from environment variables');
+      }
+
+      // Skip MSAL initialization if credentials are not configured (dev mode)
+      if (clientId === 'dev-client-id' || !clientId) {
+        this.logger.warn(
+          'Azure Entra ID credentials not configured. SSO login will not work. Use /auth/login/local for local auth or /auth/dev-token/:userId for testing.',
+        );
+        this.msalClient = null;
+        this.isInitialized = true;
+        return;
+      }
+
+      const msalConfig: msal.Configuration = {
+        auth: {
+          clientId,
+          authority: `https://login.microsoftonline.com/${tenantId}`,
+          clientSecret,
         },
-      },
-    };
+        system: {
+          loggerOptions: {
+            loggerCallback: (level, message, containsPii) => {
+              if (containsPii) return;
+              switch (level) {
+                case msal.LogLevel.Error:
+                  this.logger.error(message);
+                  break;
+                case msal.LogLevel.Warning:
+                  this.logger.warn(message);
+                  break;
+                case msal.LogLevel.Info:
+                  this.logger.log(message);
+                  break;
+                case msal.LogLevel.Verbose:
+                  this.logger.debug(message);
+                  break;
+              }
+            },
+            piiLoggingEnabled: false,
+            logLevel: msal.LogLevel.Warning,
+          },
+        },
+      };
 
-    this.msalClient = new msal.ConfidentialClientApplication(msalConfig);
+      this.msalClient = new msal.ConfidentialClientApplication(msalConfig);
+      this.isInitialized = true;
+      this.logger.log('MSAL client initialized successfully');
+    } catch (error) {
+      this.logger.error('Error initializing MSAL client', error);
+      this.msalClient = null;
+      this.isInitialized = true; // Mark as initialized even on error to prevent blocking
+    }
+  }
+
+  /**
+   * Reinitialize MSAL when SSO settings are updated
+   * Call this after updating SSO config in the database
+   */
+  async reinitialize(): Promise<void> {
+    this.logger.log('Reinitializing MSAL client with updated config');
+    await this.initializeMsal();
   }
 
   /**

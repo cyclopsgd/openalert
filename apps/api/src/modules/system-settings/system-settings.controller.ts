@@ -1,17 +1,22 @@
-import { Controller, Get, Put, Body, Param, UseGuards, HttpCode } from '@nestjs/common';
+import { Controller, Get, Put, Body, Param, UseGuards, HttpCode, Inject, forwardRef } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SystemSettingsService } from './system-settings.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { UpdateSSOConfigDto } from './dto/update-sso-config.dto';
 import { UpdateGeneralSettingsDto } from './dto/update-general-settings.dto';
+import { MsalService } from '../auth/msal.service';
 
 @ApiTags('system-settings')
 @Controller('system-settings')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SystemSettingsController {
-  constructor(private readonly settingsService: SystemSettingsService) {}
+  constructor(
+    private readonly settingsService: SystemSettingsService,
+    @Inject(forwardRef(() => MsalService))
+    private readonly msalService: MsalService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all system settings' })
@@ -29,7 +34,12 @@ export class SystemSettingsController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Update SSO configuration' })
   async updateSSOConfig(@Body() dto: UpdateSSOConfigDto) {
-    return this.settingsService.updateSSOConfig(dto);
+    const result = await this.settingsService.updateSSOConfig(dto);
+
+    // Reinitialize MSAL with the new configuration
+    await this.msalService.reinitialize();
+
+    return result;
   }
 
   @Get('general')
