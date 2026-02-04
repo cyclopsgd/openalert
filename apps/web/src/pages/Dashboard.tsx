@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MetricsBar } from '@/components/dashboard/MetricsBar'
 import { IncidentTrendsChart } from '@/components/dashboard/IncidentTrendsChart'
 import { StatusDistributionChart } from '@/components/dashboard/StatusDistributionChart'

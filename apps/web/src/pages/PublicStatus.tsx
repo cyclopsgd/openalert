@@ -247,10 +247,14 @@ export function PublicStatus() {
                         <Badge
                           variant={
                             incident.severity === 'critical'
-                              ? 'danger'
+                              ? 'critical'
                               : incident.severity === 'high'
-                              ? 'warning'
-                              : 'secondary'
+                              ? 'high'
+                              : incident.severity === 'medium'
+                              ? 'medium'
+                              : incident.severity === 'low'
+                              ? 'low'
+                              : 'default'
                           }
                         >
                           {incident.severity}
@@ -260,8 +264,10 @@ export function PublicStatus() {
                             incident.status === 'resolved'
                               ? 'success'
                               : incident.status === 'acknowledged'
-                              ? 'warning'
-                              : 'danger'
+                              ? 'acknowledged'
+                              : incident.status === 'triggered'
+                              ? 'triggered'
+                              : 'default'
                           }
                         >
                           {incident.status}

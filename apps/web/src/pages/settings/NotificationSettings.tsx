@@ -36,7 +36,7 @@ export function NotificationSettings() {
   const [showTwilioToken, setShowTwilioToken] = useState(false)
   const [showWebhookSecret, setShowWebhookSecret] = useState(false)
 
-  const { data: config, isLoading } = useQuery<NotificationConfig>({
+  const { isLoading } = useQuery<NotificationConfig>({
     queryKey: ['notification-config'],
     queryFn: async () => {
       try {

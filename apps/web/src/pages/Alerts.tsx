@@ -6,6 +6,7 @@ import { SeverityBadge, AlertStatusBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useAlerts, useAcknowledgeAlert, useResolveAlert } from '@/hooks/useAlerts'
 import { formatTimeAgo } from '@/lib/utils/format'
+import { type Alert } from '@/types/api'
 
 export function Alerts() {
   const navigate = useNavigate()
@@ -13,7 +14,7 @@ export function Alerts() {
   const acknowledgeMutation = useAcknowledgeAlert()
   const resolveMutation = useResolveAlert()
 
-  const handleAlertClick = (alert: typeof alerts[0]) => {
+  const handleAlertClick = (alert: Alert) => {
     if (alert.incidentId) {
       navigate(`/incidents/${alert.incidentId}`)
     }

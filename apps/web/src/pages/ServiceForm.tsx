@@ -44,7 +44,7 @@ export function ServiceForm() {
     description: '',
     teamId: '',
     escalationPolicyId: '',
-    status: 'operational' as const,
+    status: 'operational' as 'operational' | 'degraded' | 'outage' | 'maintenance',
     dependencyIds: [] as number[],
   })
 

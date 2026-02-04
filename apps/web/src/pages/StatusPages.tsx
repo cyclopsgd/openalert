@@ -9,13 +9,11 @@ import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useStatusPages, useCreateStatusPage, useUpdateStatusPage, useDeleteStatusPage } from '@/hooks/useStatusPages'
 import { useServices } from '@/hooks/useServices'
-import { useAuthStore } from '@/stores/authStore'
-import { showToast } from '@/components/ui/Toast'
+import { toast } from '@/components/ui/Toast'
 import type { CreateStatusPageDto, UpdateStatusPageDto } from '@/hooks/useStatusPages'
 
 export function StatusPages() {
-  const { user } = useAuthStore()
-  const teamId = user?.teamId || 1
+  const teamId = 1 // TODO: Get teamId from user's team membership
   const { data: statusPages = [], isLoading } = useStatusPages(teamId)
   const { data: services = [] } = useServices()
   const createStatusPage = useCreateStatusPage()
@@ -93,17 +91,17 @@ export function StatusPages() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      showToast('Please enter a page name', 'error')
+      toast.error('Please enter a page name')
       return
     }
 
     if (!formData.slug.trim()) {
-      showToast('Please enter a slug', 'error')
+      toast.error('Please enter a slug')
       return
     }
 
     if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      showToast('Slug can only contain lowercase letters, numbers, and hyphens', 'error')
+      toast.error('Slug can only contain lowercase letters, numbers, and hyphens')
       return
     }
 
@@ -118,7 +116,7 @@ export function StatusPages() {
           serviceIds: formData.serviceIds,
         }
         await updateStatusPage.mutateAsync({ id: editingPage, data: updateData })
-        showToast('Status page updated successfully', 'success')
+        toast.success('Status page updated successfully')
       } else {
         const createData: CreateStatusPageDto = {
           name: formData.name,
@@ -130,22 +128,22 @@ export function StatusPages() {
           serviceIds: formData.serviceIds,
         }
         await createStatusPage.mutateAsync(createData)
-        showToast('Status page created successfully', 'success')
+        toast.success('Status page created successfully')
       }
       setShowModal(false)
       resetForm()
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to save status page', 'error')
+      toast.error(error.response?.data?.message || 'Failed to save status page')
     }
   }
 
   const handleDelete = async (pageId: number) => {
     try {
       await deleteStatusPage.mutateAsync({ id: pageId, teamId })
-      showToast('Status page deleted successfully', 'success')
+      toast.success('Status page deleted successfully')
       setDeleteConfirm(null)
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to delete status page', 'error')
+      toast.error(error.response?.data?.message || 'Failed to delete status page')
     }
   }
 
@@ -158,7 +156,7 @@ export function StatusPages() {
     navigator.clipboard.writeText(url)
     setCopiedUrl(slug)
     setTimeout(() => setCopiedUrl(null), 2000)
-    showToast('URL copied to clipboard', 'success')
+    toast.success('URL copied to clipboard')
   }
 
   const toggleServiceSelection = (serviceId: number) => {
@@ -216,7 +214,7 @@ export function StatusPages() {
                   )}
                   <div className="flex items-center gap-2 text-xs text-dark-500">
                     <span className="font-mono">/status/{page.slug}</span>
-                    <Badge variant={page.isPublic ? 'success' : 'secondary'}>
+                    <Badge variant={page.isPublic ? 'success' : 'default'}>
                       {page.isPublic ? 'Public' : 'Private'}
                     </Badge>
                   </div>
@@ -399,7 +397,7 @@ export function StatusPages() {
         title="Delete Status Page"
         description="Are you sure you want to delete this status page? This action cannot be undone and the public URL will stop working."
         confirmText="Delete"
-        confirmVariant="danger"
+        variant="danger"
       />
     </motion.div>
   )

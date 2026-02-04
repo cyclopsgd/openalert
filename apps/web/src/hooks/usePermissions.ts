@@ -2,11 +2,11 @@ import { useAuthStore } from '@/stores/authStore'
 import {
   hasPermission as checkPermission,
   canPerformAction as checkAction,
-  Permission,
+  type Permission,
   getRolePermissions,
   isRoleHigherOrEqual,
 } from '@/lib/permissions/permissions'
-import { UserRole } from '@/types/api'
+import { type UserRole } from '@/types/api'
 
 /**
  * Hook for checking user permissions in components

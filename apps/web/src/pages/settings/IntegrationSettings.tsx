@@ -230,7 +230,7 @@ export function IntegrationSettings() {
                       </span>
                       <span className="font-medium text-dark-100">{integration.name}</span>
                     </div>
-                    <Badge variant={integration.isActive ? 'success' : 'secondary'}>
+                    <Badge variant={integration.isActive ? 'success' : 'default'}>
                       {integration.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
@@ -252,7 +252,7 @@ export function IntegrationSettings() {
                 </h3>
                 <div className="flex gap-2">
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleRegenerateKey(selectedIntegration.id)}
                   >
@@ -260,11 +260,11 @@ export function IntegrationSettings() {
                     Regenerate
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(selectedIntegration.id)}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3 w-3 text-status-critical" />
                   </Button>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export function IntegrationSettings() {
                     className="flex-1 font-mono text-sm"
                   />
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={() =>
                       copyToClipboard(
@@ -311,7 +311,7 @@ export function IntegrationSettings() {
                     className="flex-1 font-mono text-sm"
                   />
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={() =>
                       copyToClipboard(
@@ -357,7 +357,7 @@ export function IntegrationSettings() {
                               variant={
                                 log.statusCode >= 200 && log.statusCode < 300
                                   ? 'success'
-                                  : 'danger'
+                                  : 'critical'
                               }
                             >
                               {log.statusCode}

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { RoleBadge } from '@/components/ui/RoleBadge'
 import { apiClient } from '@/lib/api/client'
 import { format } from 'date-fns'
-import { User as UserType, UserRole } from '@/types/api'
+import type { User as UserType, UserRole } from '@/types/api'
 import { usePermissions } from '@/hooks/usePermissions'
 import { getRoleDescription } from '@/lib/permissions/permissions'
 import { useAuthStore } from '@/stores/authStore'
@@ -18,7 +18,7 @@ interface User extends UserType {}
 export function UserManagement() {
   const queryClient = useQueryClient()
   const { user: currentUser } = useAuthStore()
-  const { isSuperadmin, isAdmin } = usePermissions()
+  const { isSuperadmin } = usePermissions()
   const [authProviderFilter, setAuthProviderFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [roleFilter, setRoleFilter] = useState<string>('all')
@@ -264,7 +264,7 @@ export function UserManagement() {
                       </td>
                       <td className="p-4">
                         <p className="text-sm text-dark-400">
-                          {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                          {user.createdAt ? format(new Date(user.createdAt), 'MMM d, yyyy') : 'N/A'}
                         </p>
                       </td>
                       <td className="p-4">
@@ -352,7 +352,7 @@ export function UserManagement() {
               <div>
                 <p className="text-xs text-dark-500 mb-1">Created At</p>
                 <p className="text-sm text-dark-200">
-                  {format(new Date(selectedUser.createdAt), 'MMM d, yyyy HH:mm')}
+                  {selectedUser.createdAt ? format(new Date(selectedUser.createdAt), 'MMM d, yyyy HH:mm') : 'N/A'}
                 </p>
               </div>
             </div>

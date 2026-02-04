@@ -15,7 +15,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import { RoleBadge } from '@/components/ui/RoleBadge'
-import { Permission } from '@/lib/permissions/permissions'
+import { type Permission } from '@/lib/permissions/permissions'
 
 interface NavItem {
   name: string

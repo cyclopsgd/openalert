@@ -1,4 +1,4 @@
-import { UserRole } from '@/types/api'
+import { type UserRole } from '@/types/api'
 
 /**
  * Permission definitions for RBAC (must match backend)
@@ -82,7 +82,7 @@ export type Permission = keyof typeof PERMISSIONS
  */
 export function hasPermission(role: UserRole | undefined, permission: Permission): boolean {
   if (!role) return false
-  const allowedRoles = PERMISSIONS[permission]
+  const allowedRoles = PERMISSIONS[permission] as readonly UserRole[]
   return allowedRoles ? allowedRoles.includes(role) : false
 }
 
@@ -104,7 +104,7 @@ export function canPerformAction(
 export function getRolePermissions(role: UserRole): Permission[] {
   const permissions: Permission[] = []
   for (const [permission, roles] of Object.entries(PERMISSIONS)) {
-    if (roles.includes(role)) {
+    if ((roles as readonly UserRole[]).includes(role)) {
       permissions.push(permission as Permission)
     }
   }

@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Wrench,
-  Settings as SettingsIcon,
 } from 'lucide-react'
 import apiClient from '@/lib/api/client'
 import { toast } from '@/components/ui/Toast'

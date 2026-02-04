@@ -29,6 +29,19 @@ interface EscalationPolicy {
   createdAt: string
 }
 
+const getTargetIcon = (type: string) => {
+  switch (type) {
+    case 'user':
+      return <Users className="h-4 w-4" />
+    case 'schedule':
+      return <Calendar className="h-4 w-4" />
+    case 'team':
+      return <Building className="h-4 w-4" />
+    default:
+      return null
+  }
+}
+
 export function EscalationPolicies() {
   const queryClient = useQueryClient()
   const [selectedPolicy, setSelectedPolicy] = useState<EscalationPolicy | null>(null)
@@ -66,19 +79,6 @@ export function EscalationPolicies() {
       month: 'short',
       day: 'numeric',
     })
-  }
-
-  const getTargetIcon = (type: string) => {
-    switch (type) {
-      case 'user':
-        return <Users className="h-4 w-4" />
-      case 'schedule':
-        return <Calendar className="h-4 w-4" />
-      case 'team':
-        return <Building className="h-4 w-4" />
-      default:
-        return null
-    }
   }
 
   if (isLoading) {

@@ -1,6 +1,6 @@
-import { UserRole } from '@/types/api'
+import { type UserRole } from '@/types/api'
 import { getRoleDisplayName, getRoleColor } from '@/lib/permissions/permissions'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/Badge'
 
 interface RoleBadgeProps {
   role: UserRole
@@ -13,9 +13,9 @@ export function RoleBadge({ role, className }: RoleBadgeProps) {
 
   const variantMap = {
     purple: 'default',
-    blue: 'secondary',
-    green: 'outline',
-    gray: 'secondary',
+    blue: 'default',
+    green: 'success',
+    gray: 'default',
   } as const
 
   return (

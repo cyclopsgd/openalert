@@ -7,10 +7,9 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { useRoutingRules, useCreateRoutingRule, useUpdateRoutingRule, useDeleteRoutingRule, useUpdateRulePriority, useTestRoutingRule } from '@/hooks/useRoutingRules'
+import { useRoutingRules, useCreateRoutingRule, useUpdateRoutingRule, useDeleteRoutingRule, useTestRoutingRule } from '@/hooks/useRoutingRules'
 import { useServices } from '@/hooks/useServices'
-import { useAuthStore } from '@/stores/authStore'
-import { showToast } from '@/components/ui/Toast'
+import { toast } from '@/components/ui/Toast'
 import type { RoutingRuleCondition, RoutingRuleAction, CreateRoutingRuleDto, UpdateRoutingRuleDto } from '@/hooks/useRoutingRules'
 
 const conditionTypes = [
@@ -38,14 +37,12 @@ const severityOptions = [
 ]
 
 export function AlertRoutingRules() {
-  const { user } = useAuthStore()
-  const teamId = user?.teamId || 1
+  const teamId = 1 // TODO: Get teamId from user's team membership
   const { data: rules = [], isLoading } = useRoutingRules(teamId)
   const { data: services = [] } = useServices()
   const createRule = useCreateRoutingRule()
   const updateRule = useUpdateRoutingRule()
   const deleteRule = useDeleteRoutingRule()
-  const updatePriority = useUpdateRulePriority()
   const testRule = useTestRoutingRule()
 
   const [showModal, setShowModal] = useState(false)
@@ -107,17 +104,17 @@ export function AlertRoutingRules() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      showToast('Please enter a rule name', 'error')
+      toast.error('Please enter a rule name')
       return
     }
 
     if (formData.conditions.length === 0) {
-      showToast('Please add at least one condition', 'error')
+      toast.error('Please add at least one condition')
       return
     }
 
     if (formData.actions.length === 0) {
-      showToast('Please add at least one action', 'error')
+      toast.error('Please add at least one action')
       return
     }
 
@@ -132,7 +129,7 @@ export function AlertRoutingRules() {
           actions: formData.actions,
         }
         await updateRule.mutateAsync({ id: editingRule, data: updateData })
-        showToast('Rule updated successfully', 'success')
+        toast.success('Rule updated successfully')
       } else {
         const createData: CreateRoutingRuleDto = {
           name: formData.name,
@@ -144,31 +141,31 @@ export function AlertRoutingRules() {
           actions: formData.actions,
         }
         await createRule.mutateAsync(createData)
-        showToast('Rule created successfully', 'success')
+        toast.success('Rule created successfully')
       }
       setShowModal(false)
       resetForm()
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to save rule', 'error')
+      toast.error(error.response?.data?.message || 'Failed to save rule')
     }
   }
 
   const handleDelete = async (ruleId: number) => {
     try {
       await deleteRule.mutateAsync({ id: ruleId, teamId })
-      showToast('Rule deleted successfully', 'success')
+      toast.success('Rule deleted successfully')
       setDeleteConfirm(null)
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to delete rule', 'error')
+      toast.error(error.response?.data?.message || 'Failed to delete rule')
     }
   }
 
   const handleToggleEnabled = async (ruleId: number, enabled: boolean) => {
     try {
       await updateRule.mutateAsync({ id: ruleId, data: { enabled } })
-      showToast(`Rule ${enabled ? 'enabled' : 'disabled'}`, 'success')
+      toast.success(`Rule ${enabled ? 'enabled' : 'disabled'}`)
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to update rule', 'error')
+      toast.error(error.response?.data?.message || 'Failed to update rule')
     }
   }
 
@@ -232,9 +229,9 @@ export function AlertRoutingRules() {
       setTestResult(result)
     } catch (error: any) {
       if (error instanceof SyntaxError) {
-        showToast('Invalid JSON format', 'error')
+        toast.error('Invalid JSON format')
       } else {
-        showToast(error.response?.data?.message || 'Test failed', 'error')
+        toast.error(error.response?.data?.message || 'Test failed')
       }
     }
   }
@@ -324,12 +321,12 @@ export function AlertRoutingRules() {
                     <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {rule.conditions.slice(0, 2).map((cond, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
+                          <Badge key={i} variant="default" className="text-xs">
                             {cond.type.replace(/_/g, ' ')}
                           </Badge>
                         ))}
                         {rule.conditions.length > 2 && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="default" className="text-xs">
                             +{rule.conditions.length - 2}
                           </Badge>
                         )}
@@ -338,12 +335,12 @@ export function AlertRoutingRules() {
                     <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {rule.actions.slice(0, 2).map((action, i) => (
-                          <Badge key={i} variant="primary" className="text-xs">
+                          <Badge key={i} variant="info" className="text-xs">
                             {action.type.replace(/_/g, ' ')}
                           </Badge>
                         ))}
                         {rule.actions.length > 2 && (
-                          <Badge variant="primary" className="text-xs">
+                          <Badge variant="info" className="text-xs">
                             +{rule.actions.length - 2}
                           </Badge>
                         )}
@@ -699,7 +696,7 @@ export function AlertRoutingRules() {
           {testResult && (
             <div className="p-4 rounded-lg bg-dark-800 border border-dark-700">
               <div className="flex items-center gap-2 mb-3">
-                <Badge variant={testResult.matched ? 'success' : 'danger'}>
+                <Badge variant={testResult.matched ? 'success' : 'critical'}>
                   {testResult.matched ? 'Matched' : 'Not Matched'}
                 </Badge>
               </div>
@@ -731,7 +728,7 @@ export function AlertRoutingRules() {
                   <p className="text-xs text-dark-400 mb-1">Actions that would be applied:</p>
                   <div className="flex flex-wrap gap-1">
                     {testResult.actions.map((action: any, i: number) => (
-                      <Badge key={i} variant="primary" className="text-xs">
+                      <Badge key={i} variant="info" className="text-xs">
                         {action.type.replace(/_/g, ' ')}
                       </Badge>
                     ))}
@@ -759,7 +756,7 @@ export function AlertRoutingRules() {
         title="Delete Routing Rule"
         description="Are you sure you want to delete this routing rule? This action cannot be undone."
         confirmText="Delete"
-        confirmVariant="danger"
+        variant="danger"
       />
     </motion.div>
   )
