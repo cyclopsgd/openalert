@@ -6,6 +6,7 @@ primary_region = "iad" # Must match backend region
 [build]
   [build.args]
     NODE_VERSION = "20"
+    VITE_API_URL = "https://openalert-api.fly.dev"
 
 [env]
   NODE_ENV = "production"
