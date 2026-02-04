@@ -5,9 +5,23 @@
 @tailwind utilities;
 
 @layer base {
+  /* Mobile-first responsive typography */
+  html {
+    @apply bg-dark-900;
+    font-size: 16px; /* Ensure minimum 16px for mobile readability */
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling in iOS */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+  }
+
+  html:not(.dark) {
+    @apply bg-gray-50;
+  }
+
   body {
     @apply font-sans antialiased;
     @apply bg-dark-900 text-dark-100;
+    min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS Safari fix */
   }
 
   /* Light mode overrides */
@@ -15,13 +29,9 @@
     @apply bg-gray-50 text-gray-900;
   }
 
-  /* Ensure the root element has proper background */
-  html {
-    @apply bg-dark-900;
-  }
-
-  html:not(.dark) {
-    @apply bg-gray-50;
+  /* Improve touch scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -129,5 +139,46 @@
 
   :root:not(.dark) .hover\:text-dark-50:hover {
     @apply text-gray-900;
+  }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 640px) {
+    /* Ensure tables are scrollable on mobile */
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    /* Improve touch targets */
+    button, a, input, select, textarea {
+      min-height: 44px; /* Apple's recommended minimum */
+    }
+
+    /* Prevent horizontal scroll caused by overflow */
+    body, html {
+      overflow-x: hidden;
+    }
+
+    /* Better spacing for mobile */
+    .space-y-6 > * + * {
+      margin-top: 1rem;
+    }
+  }
+
+  /* Touch-friendly utilities */
+  .touch-manipulation {
+    touch-action: manipulation; /* Prevents double-tap zoom */
+  }
+
+  /* Safe areas for mobile notches/home indicators */
+  @supports (padding: max(0px)) {
+    .safe-area-inset-bottom {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .safe-area-inset-top {
+      padding-top: max(1rem, env(safe-area-inset-top));
+    }
   }
 }

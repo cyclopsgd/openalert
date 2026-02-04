@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { initializeTestApp, closeTestApp, cleanupDatabase } from './setup';
 import { registerUser, loginUser, createTestUser, generateTestToken } from './helpers/auth.helper';
 import { testUsers } from './helpers/fixtures';
@@ -222,7 +222,8 @@ describe('Authentication Integration Tests', () => {
       // Check that Set-Cookie header clears the authToken
       const setCookie = response.headers['set-cookie'];
       if (setCookie) {
-        expect(setCookie.some((cookie: string) => cookie.includes('authToken='))).toBe(true);
+        const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+        expect(cookies.some((cookie: string) => cookie.includes('authToken='))).toBe(true);
       }
     });
   });

@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
-import { users, User, NewUser } from '../../database/schema';
+import { users, User, NewUser, userNotificationPreferences } from '../../database/schema';
 
 @Injectable()
 export class UsersService {
@@ -249,5 +249,121 @@ export class UsersService {
 
     this.logger.log(`Changed role of user ${userId} to ${newRole} by user ${actorId}`);
     return updated;
+  }
+
+  /**
+   * Get user notification preferences
+   */
+  async getNotificationPreferences(userId: number) {
+    // First check if user exists
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+
+    // Try to find existing preferences
+    const prefs = await this.db.db
+      .select()
+      .from(userNotificationPreferences)
+      .where(eq(userNotificationPreferences.userId, userId))
+      .limit(1);
+
+    if (prefs.length > 0) {
+      return {
+        ...prefs[0],
+        phoneNumber: user.phoneNumber,
+      };
+    }
+
+    // Return default preferences if none exist
+    return {
+      userId,
+      emailEnabled: true,
+      smsEnabled: false,
+      pushEnabled: true,
+      slackEnabled: false,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+      notificationDelay: 0,
+      phoneNumber: user.phoneNumber,
+    };
+  }
+
+  /**
+   * Update user notification preferences
+   */
+  async updateNotificationPreferences(
+    userId: number,
+    preferences: {
+      emailEnabled?: boolean;
+      smsEnabled?: boolean;
+      pushEnabled?: boolean;
+      slackEnabled?: boolean;
+      quietHoursStart?: string;
+      quietHoursEnd?: string;
+      notificationDelay?: number;
+      phoneNumber?: string;
+    },
+  ) {
+    // First check if user exists
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+
+    // Update phone number on user if provided
+    if (preferences.phoneNumber !== undefined) {
+      await this.db.db
+        .update(users)
+        .set({ phoneNumber: preferences.phoneNumber || null, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+    }
+
+    // Check if preferences exist
+    const existing = await this.db.db
+      .select()
+      .from(userNotificationPreferences)
+      .where(eq(userNotificationPreferences.userId, userId))
+      .limit(1);
+
+    const prefData = {
+      emailEnabled: preferences.emailEnabled,
+      smsEnabled: preferences.smsEnabled,
+      pushEnabled: preferences.pushEnabled,
+      slackEnabled: preferences.slackEnabled,
+      quietHoursStart: preferences.quietHoursStart || null,
+      quietHoursEnd: preferences.quietHoursEnd || null,
+      notificationDelay: preferences.notificationDelay ?? 0,
+    };
+
+    if (existing.length > 0) {
+      // Update existing preferences
+      const [updated] = await this.db.db
+        .update(userNotificationPreferences)
+        .set({ ...prefData, updatedAt: new Date() })
+        .where(eq(userNotificationPreferences.userId, userId))
+        .returning();
+
+      this.logger.log(`Updated notification preferences for user ${userId}`);
+      return {
+        ...updated,
+        phoneNumber: preferences.phoneNumber || user.phoneNumber,
+      };
+    } else {
+      // Create new preferences
+      const [created] = await this.db.db
+        .insert(userNotificationPreferences)
+        .values({
+          userId,
+          ...prefData,
+        })
+        .returning();
+
+      this.logger.log(`Created notification preferences for user ${userId}`);
+      return {
+        ...created,
+        phoneNumber: preferences.phoneNumber || user.phoneNumber,
+      };
+    }
   }
 }

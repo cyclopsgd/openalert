@@ -1,7 +1,8 @@
 import { forwardRef } from 'react'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils/cn'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:pointer-events-none',
@@ -21,10 +22,10 @@ const buttonVariants = cva(
           'bg-status-success text-white hover:bg-status-success/90 focus:ring-status-success',
       },
       size: {
-        sm: 'h-8 px-3 text-sm',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
-        icon: 'h-10 w-10',
+        sm: 'h-9 px-3 text-sm min-h-[36px]',
+        md: 'h-11 px-4 text-sm min-h-[44px]',
+        lg: 'h-12 px-6 text-base min-h-[48px]',
+        icon: 'h-11 w-11 min-h-[44px] min-w-[44px]',
       },
     },
     defaultVariants: {
@@ -38,11 +39,13 @@ export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   isLoading?: boolean
+  tooltip?: ReactNode
+  shortcut?: string
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, children, disabled, ...props }, ref) => {
-    return (
+  ({ className, variant, size, isLoading, children, disabled, tooltip, shortcut, ...props }, ref) => {
+    const button = (
       <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
@@ -78,6 +81,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     )
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} shortcut={shortcut}>
+          {button}
+        </Tooltip>
+      )
+    }
+
+    return button
   }
 )
 

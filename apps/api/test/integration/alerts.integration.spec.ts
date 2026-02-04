@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { initializeTestApp, closeTestApp, cleanupDatabase } from './setup';
 import {
   createAuthenticatedUser,

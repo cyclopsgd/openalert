@@ -13,7 +13,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            'flex h-10 w-full rounded-lg border border-dark-600 bg-dark-800 px-3 py-2 text-sm text-dark-100 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all',
+            'flex h-11 min-h-[44px] w-full rounded-lg border border-dark-600 bg-dark-800 px-3 py-2 text-base sm:text-sm text-dark-100 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all touch-manipulation',
             error && 'border-status-critical focus:ring-status-critical',
             className
           )}

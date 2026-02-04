@@ -10,4 +10,56 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Reduce chunk size limit to ensure smaller bundles
+    chunkSizeWarningLimit: 500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core vendor chunk - most frequently used libraries
+          'vendor-core': [
+            'react',
+            'react-dom',
+            'react-router-dom',
+          ],
+          // Query management
+          'vendor-query': [
+            '@tanstack/react-query',
+          ],
+          // UI & Animation libraries
+          'vendor-ui': [
+            'framer-motion',
+            'lucide-react',
+          ],
+          // Charts - lazy loaded but grouped together
+          'vendor-charts': [
+            'recharts',
+          ],
+          // Network & realtime
+          'vendor-network': [
+            'axios',
+            'socket.io-client',
+          ],
+          // Utilities
+          'vendor-utils': [
+            'zustand',
+            'date-fns',
+            'clsx',
+            'tailwind-merge',
+            'class-variance-authority',
+          ],
+        },
+      },
+    },
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true,
+      },
+    },
+    // Source maps for debugging (can be disabled for smaller builds)
+    sourcemap: false,
+  },
 })

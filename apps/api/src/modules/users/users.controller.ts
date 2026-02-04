@@ -60,6 +60,37 @@ export class UsersController {
     });
   }
 
+  @Get('me/notification-preferences')
+  @ApiOperation({ summary: 'Get current user notification preferences' })
+  async getMyNotificationPreferences(@CurrentUser() user: CurrentUserData) {
+    return this.usersService.getNotificationPreferences(user.id);
+  }
+
+  @Patch('me/notification-preferences')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Update current user notification preferences' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        emailEnabled: { type: 'boolean' },
+        smsEnabled: { type: 'boolean' },
+        pushEnabled: { type: 'boolean' },
+        slackEnabled: { type: 'boolean' },
+        quietHoursStart: { type: 'string', pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$' },
+        quietHoursEnd: { type: 'string', pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$' },
+        notificationDelay: { type: 'number', minimum: 0, maximum: 60 },
+        phoneNumber: { type: 'string' },
+      },
+    },
+  })
+  async updateMyNotificationPreferences(
+    @CurrentUser() user: CurrentUserData,
+    @Body() preferences: any,
+  ) {
+    return this.usersService.updateNotificationPreferences(user.id, preferences);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   @RequireRole('superadmin', 'admin')

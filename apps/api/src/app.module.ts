@@ -21,6 +21,7 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { ServicesModule } from './modules/services/services.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { AlertRoutingModule } from './modules/alert-routing/alert-routing.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { AlertRoutingModule } from './modules/alert-routing/alert-routing.module
     ServicesModule,
     TeamsModule,
     AlertRoutingModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [

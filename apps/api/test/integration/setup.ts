@@ -4,8 +4,8 @@ import { AppModule } from '../../src/app.module';
 import { DatabaseService } from '../../src/database/database.service';
 import { sql } from 'drizzle-orm';
 
-let app: INestApplication;
-let moduleRef: TestingModule;
+let app: INestApplication | null = null;
+let moduleRef: TestingModule | null = null;
 
 /**
  * Initialize the test application
@@ -51,7 +51,7 @@ export async function cleanupDatabase(): Promise<void> {
   if (!app) return;
 
   const db = app.get(DatabaseService);
-  const database = db.getDatabase();
+  const database = db.db;
 
   // Disable foreign key checks temporarily
   await database.execute(sql`SET session_replication_role = 'replica'`);

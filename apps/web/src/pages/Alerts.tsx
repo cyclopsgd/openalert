@@ -37,10 +37,10 @@ export function Alerts() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-heading font-bold text-dark-50 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-dark-50 mb-2">
           Alerts
         </h1>
-        <p className="text-dark-400">
+        <p className="text-sm sm:text-base text-dark-400">
           Monitor and manage all your alerts
         </p>
       </motion.div>
@@ -59,51 +59,53 @@ export function Alerts() {
               transition={{ delay: index * 0.05 }}
             >
               <Card
-                className="p-4 hover:bg-dark-750 transition-all cursor-pointer"
+                className="p-3 sm:p-4 hover:bg-dark-750 transition-all cursor-pointer"
                 onClick={() => handleAlertClick(alert)}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                  <div className="flex-1 space-y-2 min-w-0">
                     <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-dark-400" />
-                      <h3 className="font-heading font-semibold text-dark-50">
+                      <Bell className="h-4 w-4 text-dark-400 flex-shrink-0" />
+                      <h3 className="font-heading font-semibold text-dark-50 text-sm sm:text-base break-words">
                         {alert.title || alert.alertName}
                       </h3>
                     </div>
                     {alert.description && (
-                      <p className="text-sm text-dark-400">{alert.description}</p>
+                      <p className="text-xs sm:text-sm text-dark-400 break-words">{alert.description}</p>
                     )}
-                    {alert.source && (
-                      <p className="text-xs text-dark-500">
-                        Source: {alert.source}
-                      </p>
-                    )}
-                    {alert.startsAt && (
-                      <p className="text-xs text-dark-500">
-                        {formatTimeAgo(alert.startsAt)}
-                      </p>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-dark-500">
+                      {alert.source && (
+                        <span>Source: {alert.source}</span>
+                      )}
+                      {alert.source && alert.startsAt && <span>•</span>}
+                      {alert.startsAt && (
+                        <span>{formatTimeAgo(alert.startsAt)}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex sm:flex-col items-start sm:items-end gap-2 flex-shrink-0">
                     <div className="flex gap-2">
                       <SeverityBadge severity={alert.severity} />
                       <AlertStatusBadge status={alert.status} />
                     </div>
                     {alert.status === 'firing' && (
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                         <Button
                           size="sm"
                           variant="secondary"
                           onClick={(e) => handleAcknowledge(e, alert.id)}
                           isLoading={acknowledgeMutation.isPending}
+                          className="flex-1 sm:flex-none text-xs sm:text-sm whitespace-nowrap"
                         >
-                          Acknowledge
+                          <span className="hidden sm:inline">Acknowledge</span>
+                          <span className="sm:hidden">Ack</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="success"
                           onClick={(e) => handleResolve(e, alert.id)}
                           isLoading={resolveMutation.isPending}
+                          className="flex-1 sm:flex-none text-xs sm:text-sm"
                         >
                           Resolve
                         </Button>

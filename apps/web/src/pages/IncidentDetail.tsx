@@ -149,37 +149,41 @@ export function IncidentDetail() {
           variant="ghost"
           onClick={() => navigate('/incidents')}
           className="mb-4"
+          size="sm"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Incidents
+          <span className="hidden sm:inline">Back to Incidents</span>
+          <span className="sm:hidden">Back</span>
         </Button>
 
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-2 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-mono text-dark-400">
+              <span className="text-xs sm:text-sm font-mono text-dark-400">
                 #{incident.incidentNumber}
               </span>
               <SeverityBadge severity={incident.severity} />
               <IncidentStatusBadge status={incident.status} />
             </div>
-            <h1 className="text-3xl font-heading font-bold text-dark-50 break-words">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-heading font-bold text-dark-50 break-words">
               {incident.title}
             </h1>
             {incident.service && (
-              <p className="text-dark-400">{incident.service.name}</p>
+              <p className="text-sm sm:text-base text-dark-400">{incident.service.name}</p>
             )}
           </div>
 
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0 w-full sm:w-auto">
             {incident.status === 'triggered' && (
               <Button
                 variant="secondary"
                 onClick={handleAcknowledge}
                 isLoading={acknowledgeMutation.isPending}
+                className="w-full sm:w-auto justify-center"
+                size="sm"
               >
                 <CheckCircle className="h-4 w-4" />
-                Acknowledge
+                <span>Acknowledge</span>
               </Button>
             )}
             {incident.status !== 'resolved' && (
@@ -187,9 +191,11 @@ export function IncidentDetail() {
                 variant="success"
                 onClick={handleResolve}
                 isLoading={resolveMutation.isPending}
+                className="w-full sm:w-auto justify-center"
+                size="sm"
               >
                 <CheckCircle className="h-4 w-4" />
-                Resolve
+                <span>Resolve</span>
               </Button>
             )}
           </div>
@@ -259,15 +265,15 @@ export function IncidentDetail() {
                         {sourceAlerts.map((alert) => (
                           <div
                             key={alert.id}
-                            className="p-3 bg-dark-750 rounded-lg border border-dark-700"
+                            className="p-3 sm:p-4 bg-dark-750 rounded-lg border border-dark-700"
                           >
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-dark-100 break-words">
+                                <p className="font-medium text-sm sm:text-base text-dark-100 break-words">
                                   {alert.title || alert.alertName}
                                 </p>
                                 {alert.description && (
-                                  <p className="text-sm text-dark-400 mt-1 break-words">
+                                  <p className="text-xs sm:text-sm text-dark-400 mt-1 break-words">
                                     {alert.description}
                                   </p>
                                 )}
@@ -277,7 +283,7 @@ export function IncidentDetail() {
                                   </p>
                                 )}
                               </div>
-                              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                              <div className="flex sm:flex-col items-start sm:items-end gap-2 flex-shrink-0">
                                 <SeverityBadge severity={alert.severity} />
                                 <AlertStatusBadge status={alert.status} />
                               </div>

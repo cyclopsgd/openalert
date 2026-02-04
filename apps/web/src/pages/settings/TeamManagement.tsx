@@ -196,43 +196,45 @@ export function TeamManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Team Management</h2>
-          <p className="text-dark-400 mt-1">Manage teams and their members</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Team Management</h2>
+          <p className="text-sm sm:text-base text-dark-400 mt-1">Manage teams and their members</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white rounded-lg transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white rounded-lg transition-colors min-h-[44px] w-full sm:w-auto"
         >
           <Plus className="h-4 w-4" />
-          Create Team
+          <span>Create Team</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-2">
-          <h3 className="text-lg font-semibold text-white mb-3">Teams</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-3">Teams</h3>
           {teams.length === 0 ? (
             <p className="text-dark-400 text-sm">No teams yet</p>
           ) : (
-            teams.map((team) => (
-              <button
-                key={team.id}
-                onClick={() => setSelectedTeam(team.id)}
-                className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedTeam === team.id
-                    ? 'bg-dark-700 border-accent-primary'
-                    : 'bg-dark-800 border-dark-700 hover:border-dark-600'
-                }`}
-              >
-                <div className="font-medium text-white">{team.name}</div>
-                <div className="text-sm text-dark-400 mt-1">
-                  {team.memberCount} {team.memberCount === 1 ? 'member' : 'members'} •{' '}
-                  {team.serviceCount} {team.serviceCount === 1 ? 'service' : 'services'}
-                </div>
-              </button>
-            ))
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+              {teams.map((team) => (
+                <button
+                  key={team.id}
+                  onClick={() => setSelectedTeam(team.id)}
+                  className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-colors touch-manipulation min-h-[44px] ${
+                    selectedTeam === team.id
+                      ? 'bg-dark-700 border-accent-primary'
+                      : 'bg-dark-800 border-dark-700 hover:border-dark-600'
+                  }`}
+                >
+                  <div className="font-medium text-sm sm:text-base text-white break-words">{team.name}</div>
+                  <div className="text-xs sm:text-sm text-dark-400 mt-1">
+                    {team.memberCount} {team.memberCount === 1 ? 'member' : 'members'} •{' '}
+                    {team.serviceCount} {team.serviceCount === 1 ? 'service' : 'services'}
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -243,43 +245,44 @@ export function TeamManagement() {
             </div>
           ) : teamDetail ? (
             <div className="space-y-6">
-              <div className="bg-dark-800 border border-dark-700 rounded-lg p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white">{teamDetail.name}</h3>
+              <div className="bg-dark-800 border border-dark-700 rounded-lg p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-semibold text-white break-words">{teamDetail.name}</h3>
                     {teamDetail.description && (
-                      <p className="text-dark-400 mt-1">{teamDetail.description}</p>
+                      <p className="text-sm sm:text-base text-dark-400 mt-1 break-words">{teamDetail.description}</p>
                     )}
                   </div>
                   <button
                     onClick={() => deleteMutation.mutate(teamDetail.id)}
-                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded text-sm transition-colors"
+                    className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded text-xs sm:text-sm transition-colors min-h-[44px] w-full sm:w-auto flex items-center justify-center gap-2 touch-manipulation"
                   >
-                    Delete Team
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete Team</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-700">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-dark-700">
                   <div>
-                    <div className="text-sm text-dark-400">Members</div>
-                    <div className="text-2xl font-bold text-white">{teamDetail.members.length}</div>
+                    <div className="text-xs sm:text-sm text-dark-400">Members</div>
+                    <div className="text-xl sm:text-2xl font-bold text-white">{teamDetail.members.length}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-dark-400">Services</div>
-                    <div className="text-2xl font-bold text-white">{teamDetail.services.length}</div>
+                    <div className="text-xs sm:text-sm text-dark-400">Services</div>
+                    <div className="text-xl sm:text-2xl font-bold text-white">{teamDetail.services.length}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-dark-800 border border-dark-700 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-white">Members</h4>
+              <div className="bg-dark-800 border border-dark-700 rounded-lg p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white">Members</h4>
                   <button
                     onClick={() => setShowAddMemberModal(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white rounded text-sm transition-colors"
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white rounded text-sm transition-colors min-h-[44px] w-full sm:w-auto touch-manipulation"
                   >
                     <UserPlus className="h-4 w-4" />
-                    Add Member
+                    <span>Add Member</span>
                   </button>
                 </div>
 
@@ -290,13 +293,13 @@ export function TeamManagement() {
                     {teamDetail.members.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between p-3 bg-dark-700 border border-dark-600 rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-dark-700 border border-dark-600 rounded-lg"
                       >
-                        <div className="flex-1">
-                          <div className="font-medium text-white">{member.user.name}</div>
-                          <div className="text-sm text-dark-400">{member.user.email}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm sm:text-base text-white break-words">{member.user.name}</div>
+                          <div className="text-xs sm:text-sm text-dark-400 break-all">{member.user.email}</div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                           <select
                             value={member.role}
                             onChange={(e) =>
@@ -306,13 +309,15 @@ export function TeamManagement() {
                                 role: e.target.value,
                               })
                             }
-                            className="px-3 py-1.5 bg-dark-600 border border-dark-500 rounded text-white text-sm focus:outline-none focus:border-accent-primary"
+                            className="flex-1 sm:flex-none px-3 py-2 bg-dark-600 border border-dark-500 rounded text-white text-xs sm:text-sm focus:outline-none focus:border-accent-primary min-h-[44px]"
                           >
                             <option value="team_admin">Team Admin</option>
                             <option value="member">Member</option>
                             <option value="observer">Observer</option>
                           </select>
-                          {getRoleIcon(member.role)}
+                          <div className="flex-shrink-0">
+                            {getRoleIcon(member.role)}
+                          </div>
                           <button
                             onClick={() =>
                               removeMemberMutation.mutate({
@@ -320,7 +325,8 @@ export function TeamManagement() {
                                 userId: member.userId,
                               })
                             }
-                            className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                            className="p-2 hover:bg-red-500/20 text-red-400 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+                            aria-label="Remove member"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

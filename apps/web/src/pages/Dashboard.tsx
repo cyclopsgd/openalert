@@ -1,8 +1,6 @@
+import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { MetricsBar } from '@/components/dashboard/MetricsBar'
-import { IncidentTrendsChart } from '@/components/dashboard/IncidentTrendsChart'
-import { StatusDistributionChart } from '@/components/dashboard/StatusDistributionChart'
-import { ResponseTimeChart } from '@/components/dashboard/ResponseTimeChart'
 import { RecentIncidentsTable } from '@/components/dashboard/RecentIncidentsTable'
 import { useIncidents } from '@/hooks/useIncidents'
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
@@ -10,6 +8,11 @@ import { useIncidentTrends } from '@/hooks/useIncidentTrends'
 import { useResponseTimes } from '@/hooks/useResponseTimes'
 import { useRealtime } from '@/hooks/useRealtime'
 import { RefreshCw } from 'lucide-react'
+
+// Lazy load chart components (they include heavy recharts library)
+const IncidentTrendsChart = lazy(() => import('@/components/dashboard/IncidentTrendsChart').then(m => ({ default: m.IncidentTrendsChart })))
+const StatusDistributionChart = lazy(() => import('@/components/dashboard/StatusDistributionChart').then(m => ({ default: m.StatusDistributionChart })))
+const ResponseTimeChart = lazy(() => import('@/components/dashboard/ResponseTimeChart').then(m => ({ default: m.ResponseTimeChart })))
 
 function LoadingSkeleton() {
   return (
@@ -60,13 +63,17 @@ export function Dashboard() {
         {trendsLoading ? (
           <LoadingSkeleton />
         ) : trends ? (
-          <IncidentTrendsChart data={trends} />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <IncidentTrendsChart data={trends} />
+          </Suspense>
         ) : null}
 
         {metricsLoading ? (
           <LoadingSkeleton />
         ) : metrics ? (
-          <StatusDistributionChart data={metrics.statusBreakdown} />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <StatusDistributionChart data={metrics.statusBreakdown} />
+          </Suspense>
         ) : null}
       </div>
 
@@ -74,7 +81,9 @@ export function Dashboard() {
         {responseTimesLoading ? (
           <LoadingSkeleton />
         ) : responseTimes ? (
-          <ResponseTimeChart data={responseTimes} />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <ResponseTimeChart data={responseTimes} />
+          </Suspense>
         ) : null}
 
         <div className="lg:col-span-1">

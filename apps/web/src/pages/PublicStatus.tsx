@@ -118,28 +118,28 @@ export function PublicStatus() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-6 sm:space-y-8"
         >
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white px-2">
               {data.name}
             </h1>
             {data.description && (
-              <p className="text-lg text-gray-600 dark:text-gray-400">
+              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 px-2">
                 {data.description}
               </p>
             )}
 
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center px-2">
               <div
-                className={`inline-flex items-center gap-3 px-6 py-4 rounded-xl border-2 ${overallConfig.bgColor} ${overallConfig.borderColor}`}
+                className={`inline-flex items-center gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 rounded-xl border-2 ${overallConfig.bgColor} ${overallConfig.borderColor} max-w-full`}
               >
-                <OverallIcon className={`h-8 w-8 ${overallConfig.color}`} />
-                <span className={`text-xl font-semibold ${overallConfig.color}`}>
+                <OverallIcon className={`h-6 w-6 sm:h-8 sm:w-8 ${overallConfig.color} flex-shrink-0`} />
+                <span className={`text-base sm:text-xl font-semibold ${overallConfig.color} break-words`}>
                   {overallConfig.label}
                 </span>
               </div>
@@ -147,14 +147,14 @@ export function PublicStatus() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                 Services
               </h2>
             </div>
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {data.services.length === 0 ? (
-                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <div className="px-4 sm:px-6 py-6 sm:py-8 text-center text-sm sm:text-base text-gray-500 dark:text-gray-400">
                   No services configured
                 </div>
               ) : (
@@ -167,29 +167,29 @@ export function PublicStatus() {
                         key={service.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`px-6 py-5 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${statusConfig.bgColor} border-l-4 ${statusConfig.borderColor}`}
+                        className={`px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${statusConfig.bgColor} border-l-4 ${statusConfig.borderColor}`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <span className={`text-2xl ${statusConfig.color}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                              <span className={`text-xl sm:text-2xl ${statusConfig.color} flex-shrink-0 leading-none pt-0.5 sm:pt-0`}>
                                 {statusConfig.icon}
                               </span>
-                              <div>
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white break-words">
                                   {service.name}
                                 </h3>
                                 {service.description && (
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 break-words">
                                     {service.description}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <div className="ml-4">
+                          <div className="flex-shrink-0 self-start sm:self-auto sm:ml-4">
                             <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusConfig.color} ${statusConfig.bgColor} border ${statusConfig.borderColor}`}
+                              className={`inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${statusConfig.color} ${statusConfig.bgColor} border ${statusConfig.borderColor} whitespace-nowrap`}
                             >
                               {statusConfig.label}
                             </span>
@@ -204,11 +204,11 @@ export function PublicStatus() {
 
           {data.recentIncidents.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                   Recent Incidents
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Last 30 days
                 </p>
               </div>
@@ -218,21 +218,21 @@ export function PublicStatus() {
                     key={incident.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="px-6 py-5"
+                    className="px-4 sm:px-6 py-4 sm:py-5"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-start gap-2 mb-2">
                           <div
-                            className={`h-2 w-2 rounded-full ${
+                            className={`h-2 w-2 rounded-full flex-shrink-0 mt-1.5 ${
                               severityColors[incident.severity] || 'bg-gray-500'
                             }`}
                           />
-                          <h3 className="text-base font-medium text-gray-900 dark:text-white truncate">
+                          <h3 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white break-words">
                             {incident.title}
                           </h3>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600 dark:text-gray-400 ml-4">
                           <span>
                             Created: {new Date(incident.createdAt).toLocaleString()}
                           </span>
@@ -243,7 +243,7 @@ export function PublicStatus() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap self-start">
                         <Badge
                           variant={
                             incident.severity === 'critical'
@@ -280,15 +280,17 @@ export function PublicStatus() {
             </div>
           )}
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden p-6">
-            <div className="flex items-center justify-between text-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm">
               <div className="text-gray-600 dark:text-gray-400">
                 <span className="font-medium">Last updated:</span>{' '}
-                {new Date(data.lastUpdated).toLocaleString()}
+                <span className="block sm:inline mt-1 sm:mt-0">
+                  {new Date(data.lastUpdated).toLocaleString()}
+                </span>
               </div>
               <button
                 onClick={() => refetch()}
-                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:px-3 sm:py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[44px] sm:min-h-0 touch-manipulation border border-gray-300 dark:border-gray-600 rounded-lg sm:border-none"
               >
                 <RefreshCw className="h-4 w-4" />
                 <span>Refresh</span>

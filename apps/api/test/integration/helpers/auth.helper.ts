@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as request from 'supertest';
+import request from 'supertest';
 import { users } from '../../../src/database/schema';
 import { DatabaseService } from '../../../src/database/database.service';
 
@@ -20,7 +20,7 @@ export async function createTestUser(
   userData: Partial<TestUser> = {},
 ): Promise<TestUser> {
   const db = app.get(DatabaseService);
-  const database = db.getDatabase();
+  const database = db.db;
 
   const defaultUser = {
     email: `test-${Date.now()}@example.com`,
@@ -78,14 +78,16 @@ export async function createAuthenticatedUser(
 /**
  * Make an authenticated GET request
  */
-export function authenticatedGet(app: INestApplication, url: string, token: string) {
+export function authenticatedGet(app: INestApplication, url: string, token: string | undefined) {
+  if (!token) throw new Error('Token is required for authenticated requests');
   return request(app.getHttpServer()).get(url).set('Authorization', `Bearer ${token}`);
 }
 
 /**
  * Make an authenticated POST request
  */
-export function authenticatedPost(app: INestApplication, url: string, token: string, body?: any) {
+export function authenticatedPost(app: INestApplication, url: string, token: string | undefined, body?: any) {
+  if (!token) throw new Error('Token is required for authenticated requests');
   return request(app.getHttpServer())
     .post(url)
     .set('Authorization', `Bearer ${token}`)
@@ -98,9 +100,10 @@ export function authenticatedPost(app: INestApplication, url: string, token: str
 export function authenticatedPatch(
   app: INestApplication,
   url: string,
-  token: string,
+  token: string | undefined,
   body?: any,
 ) {
+  if (!token) throw new Error('Token is required for authenticated requests');
   return request(app.getHttpServer())
     .patch(url)
     .set('Authorization', `Bearer ${token}`)
@@ -110,7 +113,8 @@ export function authenticatedPatch(
 /**
  * Make an authenticated PUT request
  */
-export function authenticatedPut(app: INestApplication, url: string, token: string, body?: any) {
+export function authenticatedPut(app: INestApplication, url: string, token: string | undefined, body?: any) {
+  if (!token) throw new Error('Token is required for authenticated requests');
   return request(app.getHttpServer())
     .put(url)
     .set('Authorization', `Bearer ${token}`)
@@ -120,7 +124,8 @@ export function authenticatedPut(app: INestApplication, url: string, token: stri
 /**
  * Make an authenticated DELETE request
  */
-export function authenticatedDelete(app: INestApplication, url: string, token: string) {
+export function authenticatedDelete(app: INestApplication, url: string, token: string | undefined) {
+  if (!token) throw new Error('Token is required for authenticated requests');
   return request(app.getHttpServer()).delete(url).set('Authorization', `Bearer ${token}`);
 }
 
