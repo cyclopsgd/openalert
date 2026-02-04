@@ -2,10 +2,10 @@ import type { Config } from 'drizzle-kit';
 
 export default {
   schema: './src/database/schema.ts',
-  out: './src/database/migrations',
-  driver: 'pg',
+  out: './migrations',
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString:
+    url:
       process.env.DATABASE_URL || 'postgresql://openalert:openalert_dev@localhost:5432/openalert',
   },
   verbose: true,
