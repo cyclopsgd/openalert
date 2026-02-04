@@ -64,7 +64,7 @@ export class LocalAuthService {
 
     // Generate JWT
     const accessToken = this.jwtService.sign(
-      { sub: newUser.id, email: newUser.email, name: newUser.name },
+      { sub: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role },
       { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' },
     );
 
@@ -74,6 +74,7 @@ export class LocalAuthService {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+        role: newUser.role,
       },
     };
   }
@@ -115,7 +116,7 @@ export class LocalAuthService {
 
     // Generate JWT
     const accessToken = this.jwtService.sign(
-      { sub: user.id, email: user.email, name: user.name },
+      { sub: user.id, email: user.email, name: user.name, role: user.role },
       { expiresIn: this.config.get('JWT_EXPIRES_IN') || '7d' },
     );
 
@@ -125,6 +126,7 @@ export class LocalAuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
     };
   }

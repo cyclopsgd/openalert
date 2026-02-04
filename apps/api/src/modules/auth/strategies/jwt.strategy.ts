@@ -9,6 +9,7 @@ export interface JwtPayload {
   sub: string; // user ID
   email: string;
   name: string;
+  role?: string;
   oid?: string; // Azure AD object ID
 }
 
@@ -47,6 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       name: user.name,
       externalId: user.externalId,
+      role: user.role,
     };
   }
 }
