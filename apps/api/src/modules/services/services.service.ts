@@ -9,10 +9,14 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { eq, and, sql, inArray, or } from 'drizzle-orm';
 import { services, serviceDependencies, incidents, teams } from '../../database/schema';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 @Injectable()
 export class ServicesService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async create(createServiceDto: CreateServiceDto) {
     const { dependencyIds, slug, ...serviceData } = createServiceDto;
@@ -55,11 +59,21 @@ export class ServicesService {
       await this.addDependencies(service.id, dependencyIds);
     }
 
+    // Invalidate services cache
+    await this.invalidateServicesCache();
+
     return this.findOne(service.id);
   }
 
   async findAll(teamId?: number) {
-    const query = this.db.select().from(services);
+    // Try to get from cache
+    const cacheKey = this.cacheService.buildKey(CACHE_PREFIX.SERVICES, 'list', teamId || 'all');
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const query = this.db.db.select().from(services);
 
     if (teamId) {
       query.where(eq(services.teamId, teamId));
@@ -103,15 +117,20 @@ export class ServicesService {
     const dependencyCountMap = new Map(dependencyCounts.map((dc) => [dc.serviceId, dc.count]));
 
     // Combine results
-    return allServices.map((service) => ({
+    const result = allServices.map((service) => ({
       ...service,
       activeIncidentCount: incidentCountMap.get(service.id) || 0,
       dependencyCount: dependencyCountMap.get(service.id) || 0,
     }));
+
+    // Cache the result
+    await this.cacheService.set(cacheKey, result, CACHE_TTL.SERVICES_LIST);
+
+    return result;
   }
 
   async findOne(id: number) {
-    const [service] = await this.db.select().from(services).where(eq(services.id, id)).limit(1);
+    const [service] = await this.db.db.select().from(services).where(eq(services.id, id)).limit(1);
 
     if (!service) {
       throw new NotFoundException(`Service with ID ${id} not found`);
@@ -200,7 +219,7 @@ export class ServicesService {
     // Update dependencies if provided
     if (dependencyIds !== undefined) {
       // Remove all existing dependencies
-      await this.db.delete(serviceDependencies).where(eq(serviceDependencies.serviceId, id));
+      await this.db.db.delete(serviceDependencies).where(eq(serviceDependencies.serviceId, id));
 
       // Add new dependencies
       if (dependencyIds.length > 0) {
@@ -208,15 +227,28 @@ export class ServicesService {
       }
     }
 
+    // Invalidate services cache
+    await this.invalidateServicesCache();
+
     return this.findOne(id);
   }
 
   async remove(id: number) {
     const service = await this.findOne(id);
 
-    await this.db.delete(services).where(eq(services.id, id));
+    await this.db.db.delete(services).where(eq(services.id, id));
+
+    // Invalidate services cache
+    await this.invalidateServicesCache();
 
     return { deleted: true, service };
+  }
+
+  /**
+   * Invalidate services cache
+   */
+  private async invalidateServicesCache(): Promise<void> {
+    await this.cacheService.delPattern(`${CACHE_PREFIX.SERVICES}:*`);
   }
 
   async addDependency(serviceId: number, dependsOnServiceId: number) {
@@ -279,7 +311,7 @@ export class ServicesService {
       throw new NotFoundException('Dependency not found');
     }
 
-    await this.db.delete(serviceDependencies).where(eq(serviceDependencies.id, dependencyId));
+    await this.db.db.delete(serviceDependencies).where(eq(serviceDependencies.id, dependencyId));
 
     return { deleted: true, dependency };
   }
@@ -423,7 +455,7 @@ export class ServicesService {
     }
 
     // Add dependencies
-    await this.db.insert(serviceDependencies).values(
+    await this.db.db.insert(serviceDependencies).values(
       dependencyIds.map((depId) => ({
         serviceId,
         dependsOnServiceId: depId,

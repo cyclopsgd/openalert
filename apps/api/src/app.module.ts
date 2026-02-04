@@ -4,6 +4,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { DatabaseModule } from './database/database.module';
+import { CacheModule } from './modules/cache/cache.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { QueuesModule } from './queues/queues.module';
@@ -47,6 +48,7 @@ import { AlertRoutingModule } from './modules/alert-routing/alert-routing.module
       }),
     }),
     DatabaseModule,
+    CacheModule,
     AuthModule,
     UsersModule,
     QueuesModule,

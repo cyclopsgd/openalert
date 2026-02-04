@@ -1,5 +1,5 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
 import { users } from '../schema';
 
@@ -8,11 +8,15 @@ import { users } from '../schema';
  * If no superadmin exists, promote the first user
  */
 async function ensureSuperadmin() {
-  const connectionString =
-    process.env.DATABASE_URL || 'postgresql://openalert:openalert@localhost:5432/openalert';
+  const pool = new Pool({
+    host: process.env.POSTGRES_HOST || 'localhost',
+    port: Number(process.env.POSTGRES_PORT) || 5432,
+    user: process.env.POSTGRES_USER || 'openalert',
+    password: process.env.POSTGRES_PASSWORD || 'openalert_dev',
+    database: process.env.POSTGRES_DB || 'openalert',
+  });
 
-  const queryClient = postgres(connectionString);
-  const db = drizzle(queryClient);
+  const db = drizzle(pool);
 
   try {
     // Check if any superadmin exists
@@ -41,7 +45,7 @@ async function ensureSuperadmin() {
     console.error('❌ Error ensuring superadmin:', error);
     throw error;
   } finally {
-    await queryClient.end();
+    await pool.end();
   }
 }
 

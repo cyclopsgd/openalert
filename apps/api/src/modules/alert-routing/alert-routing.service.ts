@@ -9,6 +9,7 @@ import {
 } from '../../database/schema';
 import { CreateRoutingRuleDto } from './dto/create-routing-rule.dto';
 import { UpdateRoutingRuleDto } from './dto/update-routing-rule.dto';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 interface RoutingAction {
   routeToServiceId?: number;
@@ -28,7 +29,10 @@ interface EvaluationResult {
 export class AlertRoutingService {
   private readonly logger = new Logger(AlertRoutingService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Create a new routing rule
@@ -47,6 +51,9 @@ export class AlertRoutingService {
         actions: dto.actions || {},
       })
       .returning();
+
+    // Invalidate routing rules cache
+    await this.invalidateRoutingCache(dto.teamId);
 
     return rule;
   }
@@ -95,6 +102,9 @@ export class AlertRoutingService {
       throw new NotFoundException(`Routing rule with ID ${id} not found`);
     }
 
+    // Invalidate routing rules cache
+    await this.invalidateRoutingCache(updated.teamId);
+
     return updated;
   }
 
@@ -112,6 +122,11 @@ export class AlertRoutingService {
     if (result.length === 0) {
       throw new NotFoundException(`Routing rule with ID ${id} not found`);
     }
+
+    // Invalidate routing rules cache
+    if (result[0]) {
+      await this.invalidateRoutingCache(result[0].teamId);
+    }
   }
 
   /**
@@ -127,11 +142,8 @@ export class AlertRoutingService {
   async evaluateRules(alert: Alert, teamId: number): Promise<EvaluationResult> {
     this.logger.debug(`Evaluating routing rules for alert ${alert.id}`);
 
-    // Get all enabled rules for the team, sorted by priority
-    const rules = await this.db.db.query.alertRoutingRules.findMany({
-      where: and(eq(alertRoutingRules.teamId, teamId), eq(alertRoutingRules.enabled, true)),
-      orderBy: [desc(alertRoutingRules.priority)],
-    });
+    // Get all enabled rules for the team, sorted by priority (with caching)
+    const rules = await this.getEnabledRules(teamId);
 
     const matchedRules: AlertRoutingRule[] = [];
     const actions: RoutingAction[] = [];
@@ -276,5 +288,33 @@ export class AlertRoutingService {
       ruleId,
       matchedAt: new Date(),
     });
+  }
+
+  /**
+   * Get enabled routing rules with caching
+   */
+  private async getEnabledRules(teamId: number): Promise<AlertRoutingRule[]> {
+    const cacheKey = this.cacheService.buildKey(CACHE_PREFIX.ROUTING, 'enabled', teamId);
+    const cached = await this.cacheService.get<AlertRoutingRule[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const rules = await this.db.db.query.alertRoutingRules.findMany({
+      where: and(eq(alertRoutingRules.teamId, teamId), eq(alertRoutingRules.enabled, true)),
+      orderBy: [desc(alertRoutingRules.priority)],
+    });
+
+    // Cache the result
+    await this.cacheService.set(cacheKey, rules, CACHE_TTL.ALERT_ROUTING_RULES);
+
+    return rules;
+  }
+
+  /**
+   * Invalidate routing rules cache for a team
+   */
+  private async invalidateRoutingCache(teamId: number): Promise<void> {
+    await this.cacheService.delPattern(`${CACHE_PREFIX.ROUTING}:*:${teamId}`);
   }
 }

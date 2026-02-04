@@ -66,7 +66,7 @@ async function seedTestData() {
       await db.insert(teamMembers).values({
         teamId: team.id,
         userId: testUser.id,
-        role: 'admin',
+        teamRole: 'team_admin',
       });
       console.log('Test user added to team as admin');
     } else {

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { sql, eq, and, gte, lt, count } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
 import { incidents } from '../../database/schema';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 export interface DashboardMetrics {
   activeCount: number;
@@ -44,12 +45,22 @@ export interface ResponseTimeBucket {
 export class MetricsService {
   private readonly logger = new Logger(MetricsService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Get all dashboard metrics in one call
    */
   async getDashboardMetrics(): Promise<DashboardMetrics> {
+    // Try to get from cache
+    const cacheKey = this.cacheService.buildKey(CACHE_PREFIX.METRICS, 'dashboard');
+    const cached = await this.cacheService.get<DashboardMetrics>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [activeCount, mtta, mttr, severityBreakdown, statusBreakdown] = await Promise.all([
       this.getActiveIncidentsCount(),
       this.calculateMTTA(),
@@ -58,7 +69,7 @@ export class MetricsService {
       this.getStatusBreakdown(),
     ]);
 
-    return {
+    const metrics: DashboardMetrics = {
       activeCount,
       mtta: this.formatDuration(mtta),
       mttr: this.formatDuration(mttr),
@@ -66,6 +77,11 @@ export class MetricsService {
       statusBreakdown,
       onCallEngineer: undefined, // TODO: Implement when schedules are ready
     };
+
+    // Cache the result
+    await this.cacheService.set(cacheKey, metrics, CACHE_TTL.DASHBOARD_METRICS);
+
+    return metrics;
   }
 
   /**

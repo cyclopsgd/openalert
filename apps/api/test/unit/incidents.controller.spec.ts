@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IncidentsController } from '../../src/modules/incidents/incidents.controller';
 import { IncidentsService } from '../../src/modules/incidents/incidents.service';
 import { IncidentStatusFilter } from '../../src/modules/incidents/dto/list-incidents.dto';
+import { Reflector } from '@nestjs/core';
 
 describe('IncidentsController', () => {
   let controller: IncidentsController;
@@ -24,8 +25,22 @@ describe('IncidentsController', () => {
           provide: IncidentsService,
           useValue: mockIncidentsService,
         },
+        {
+          provide: Reflector,
+          useValue: {
+            get: jest.fn(),
+            getAll: jest.fn(),
+            getAllAndMerge: jest.fn(),
+            getAllAndOverride: jest.fn(),
+          },
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(require('../../src/common/guards/jwt-auth.guard').JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(require('../../src/common/guards/team-member.guard').TeamMemberGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<IncidentsController>(IncidentsController);
     service = module.get<IncidentsService>(IncidentsService);

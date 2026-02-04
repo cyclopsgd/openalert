@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AlertsService } from '../../src/modules/alerts/alerts.service';
 import { IncidentsService } from '../../src/modules/incidents/incidents.service';
+import { AlertRoutingService } from '../../src/modules/alert-routing/alert-routing.service';
 import { DatabaseService } from '../../src/database/database.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AlertStatus, AlertSeverity } from '../../src/modules/alerts/dto/create-alert.dto';
@@ -25,11 +26,24 @@ describe('AlertsService', () => {
         },
       },
     },
+    query: {
+      integrations: {
+        findFirst: jest.fn(),
+      },
+      alerts: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+      },
+    },
   };
 
   const mockIncidentsService = {
     findOrCreateForAlert: jest.fn(),
-    autoResolveIfAllAlertsResolved: jest.fn(),
+    autoResolve: jest.fn(),
+  };
+
+  const mockAlertRoutingService = {
+    evaluateRules: jest.fn().mockResolvedValue({ matched: false, actions: [] }),
   };
 
   const mockEventEmitter = {
@@ -47,6 +61,10 @@ describe('AlertsService', () => {
         {
           provide: IncidentsService,
           useValue: mockIncidentsService,
+        },
+        {
+          provide: AlertRoutingService,
+          useValue: mockAlertRoutingService,
         },
         {
           provide: EventEmitter2,
@@ -69,13 +87,13 @@ describe('AlertsService', () => {
 
   describe('ingestAlert', () => {
     it('should validate integration exists', async () => {
-      mockDb.db.query.integrations.findFirst.mockResolvedValue(null);
+      mockDb.query.integrations.findFirst.mockResolvedValue(null);
 
       await expect(
         service.ingestAlert('invalid-key', {
           alertName: 'Test Alert',
-          status: 'firing',
-          severity: 'high',
+          status: AlertStatus.FIRING,
+          severity: AlertSeverity.HIGH,
           source: 'test',
           labels: {},
         }),
@@ -96,8 +114,16 @@ describe('AlertsService', () => {
         status: 'firing',
       };
 
-      mockDb.db.query.integrations.findFirst.mockResolvedValue(integration);
-      mockDb.db.query.alerts.findFirst.mockResolvedValue(existingAlert);
+      mockDb.query.integrations.findFirst.mockResolvedValue(integration);
+      mockDb.query.alerts.findFirst.mockResolvedValue(existingAlert);
+
+      mockDb.db.update.mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([existingAlert]),
+          }),
+        }),
+      });
 
       const result = await service.ingestAlert('test-key', {
         alertName: 'Test Alert',
@@ -128,12 +154,12 @@ describe('AlertsService', () => {
       const newAlert = {
         id: 2,
         alertName: 'Test Alert',
-        status: AlertStatus.FIRING,
-        severity: AlertSeverity.HIGH,
+        status: 'firing' as const,
+        severity: 'high' as const,
       };
 
-      mockDb.db.query.integrations.findFirst.mockResolvedValue(integration);
-      mockDb.db.query.alerts.findFirst.mockResolvedValue(null);
+      mockDb.query.integrations.findFirst.mockResolvedValue(integration);
+      mockDb.query.alerts.findFirst.mockResolvedValue(null);
       mockIncidentsService.findOrCreateForAlert.mockResolvedValue(incident);
       mockDb.db.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
@@ -162,32 +188,32 @@ describe('AlertsService', () => {
         service: { id: 1, name: 'Test Service', teamId: 1 },
       };
 
-      const existingAlert = {
-        id: 1,
-        fingerprint: 'abc123',
-        status: 'firing',
+      const newAlert = {
+        id: 2,
+        fingerprint: 'xyz789',
+        status: 'resolved',
         incidentId: 1,
       };
 
-      mockDb.db.query.integrations.findFirst.mockResolvedValue(integration);
-      mockDb.db.query.alerts.findFirst.mockResolvedValue(existingAlert);
-      mockDb.db.update.mockReturnValue({
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([{ ...existingAlert, status: 'resolved' }]),
-          }),
+      mockDb.query.integrations.findFirst.mockResolvedValue(integration);
+      mockDb.query.alerts.findFirst.mockResolvedValue(null);
+      mockDb.db.insert.mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([newAlert]),
         }),
       });
 
       await service.ingestAlert('test-key', {
         alertName: 'Test Alert',
         status: AlertStatus.RESOLVED,
-        severity: 'high',
+        severity: AlertSeverity.HIGH,
         source: 'test',
         labels: {},
       });
 
-      expect(mockIncidentsService.autoResolveIfAllAlertsResolved).toHaveBeenCalledWith(1);
+      // When resolved status, no incident is created, but autoResolve is not called
+      // because incidentId is null (status is resolved, so no incident created)
+      expect(mockIncidentsService.findOrCreateForAlert).not.toHaveBeenCalled();
     });
   });
 

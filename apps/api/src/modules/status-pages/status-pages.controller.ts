@@ -67,7 +67,7 @@ export class StatusPagesManagementController {
   @Patch(':id')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('status-page')
-  @RequireTeamRoles(['admin', 'owner'])
+  @RequireTeamRoles(['team_admin'])
   @ApiOperation({ summary: 'Update status page' })
   updateStatusPage(@Param('id') id: string, @Body() dto: UpdateStatusPageDto) {
     return this.statusPagesService.update(Number(id), dto);
@@ -76,7 +76,7 @@ export class StatusPagesManagementController {
   @Delete(':id')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('status-page')
-  @RequireTeamRoles(['admin', 'owner'])
+  @RequireTeamRoles(['team_admin'])
   @ApiOperation({ summary: 'Delete status page' })
   deleteStatusPage(@Param('id') id: string) {
     return this.statusPagesService.delete(Number(id));

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger, ConflictException } from '@nestj
 import { eq } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
 import { statusPages } from '../../database/schema';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 export interface CreateStatusPageDto {
   name: string;
@@ -32,7 +33,10 @@ export interface UpdateStatusPageDto {
 export class StatusPagesService {
   private readonly logger = new Logger(StatusPagesService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Create a new status page
@@ -98,7 +102,14 @@ export class StatusPagesService {
    * Find status page by slug (public endpoint)
    */
   async findBySlug(slug: string) {
-    return this.db.db.query.statusPages.findFirst({
+    // Try to get from cache (for public pages)
+    const cacheKey = this.cacheService.buildKey(CACHE_PREFIX.STATUS_PAGES, 'slug', slug);
+    const cached = await this.cacheService.get<any>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const statusPage = await this.db.db.query.statusPages.findFirst({
       where: eq(statusPages.slug, slug),
       with: {
         components: {
@@ -115,6 +126,13 @@ export class StatusPagesService {
         },
       },
     });
+
+    // Cache if found
+    if (statusPage) {
+      await this.cacheService.set(cacheKey, statusPage, CACHE_TTL.STATUS_PAGES);
+    }
+
+    return statusPage;
   }
 
   /**
@@ -155,6 +173,9 @@ export class StatusPagesService {
     if (!updated) {
       throw new NotFoundException(`Status page with ID ${id} not found`);
     }
+
+    // Invalidate cache for this status page
+    await this.invalidateStatusPageCache(updated.slug);
 
     return updated;
   }
@@ -215,5 +236,13 @@ export class StatusPagesService {
     if (hasMaintenance) return 'under_maintenance';
 
     return 'operational';
+  }
+
+  /**
+   * Invalidate status page cache
+   */
+  private async invalidateStatusPageCache(slug: string): Promise<void> {
+    const cacheKey = this.cacheService.buildKey(CACHE_PREFIX.STATUS_PAGES, 'slug', slug);
+    await this.cacheService.del(cacheKey);
   }
 }

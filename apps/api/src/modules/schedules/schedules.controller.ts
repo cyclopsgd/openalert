@@ -64,7 +64,7 @@ export class SchedulesController {
   @Patch(':id')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('schedule')
-  @RequireTeamRoles(['admin', 'owner'])
+  @RequireTeamRoles(['team_admin'])
   @ApiOperation({ summary: 'Update schedule' })
   updateSchedule(@Param('id') id: string, @Body() dto: UpdateScheduleDto) {
     return this.schedulesService.update(Number(id), dto);
@@ -73,7 +73,7 @@ export class SchedulesController {
   @Delete(':id')
   @UseGuards(TeamMemberGuard)
   @TeamResourceDecorator('schedule')
-  @RequireTeamRoles(['admin', 'owner'])
+  @RequireTeamRoles(['team_admin'])
   @ApiOperation({ summary: 'Delete schedule' })
   deleteSchedule(@Param('id') id: string) {
     return this.schedulesService.delete(Number(id));

@@ -3,6 +3,7 @@ import { IncidentsService } from '../../src/modules/incidents/incidents.service'
 import { DatabaseService } from '../../src/database/database.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EscalationQueueService } from '../../src/queues/escalation.queue';
+import { CacheService } from '../../src/modules/cache/cache.service';
 
 describe('IncidentsService', () => {
   let service: IncidentsService;
@@ -38,6 +39,14 @@ describe('IncidentsService', () => {
     cancelEscalation: jest.fn(),
   };
 
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    delPattern: jest.fn(),
+    buildKey: jest.fn((...parts) => parts.join(':')),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -53,6 +62,10 @@ describe('IncidentsService', () => {
         {
           provide: EscalationQueueService,
           useValue: mockEscalationQueue,
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
         },
       ],
     }).compile();
@@ -91,7 +104,7 @@ describe('IncidentsService', () => {
     });
 
     it('should create new incident when none exists', async () => {
-      const service = {
+      const testService = {
         id: 1,
         name: 'Test Service',
         escalationPolicyId: 1,
@@ -106,8 +119,23 @@ describe('IncidentsService', () => {
         serviceId: 1,
       };
 
+      const mockEscalationLevel = {
+        id: 1,
+        policyId: 1,
+        level: 1,
+        delayMinutes: 0,
+      };
+
       mockDb.db.query.incidents.findFirst.mockResolvedValue(null);
-      mockDb.db.query.services.findFirst.mockResolvedValue(service);
+      mockDb.db.query.services.findFirst.mockResolvedValue(testService);
+
+      // Add escalationLevels to the query mock
+      if (!mockDb.db.query.escalationLevels) {
+        mockDb.db.query.escalationLevels = {
+          findFirst: jest.fn(),
+        };
+      }
+      mockDb.db.query.escalationLevels.findFirst.mockResolvedValue(mockEscalationLevel);
       mockDb.db.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([newIncident]),

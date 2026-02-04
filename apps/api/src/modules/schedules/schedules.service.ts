@@ -9,12 +9,16 @@ import {
 } from '../../database/schema';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 @Injectable()
 export class SchedulesService {
   private readonly logger = new Logger(SchedulesService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Create a new on-call schedule
@@ -128,6 +132,9 @@ export class SchedulesService {
       throw new NotFoundException(`Schedule with ID ${id} not found`);
     }
 
+    // Invalidate schedule cache
+    await this.invalidateScheduleCache(id);
+
     return updated;
   }
 
@@ -205,5 +212,12 @@ export class SchedulesService {
     }
 
     return shifts;
+  }
+
+  /**
+   * Invalidate schedule cache
+   */
+  private async invalidateScheduleCache(scheduleId: number): Promise<void> {
+    await this.cacheService.delPattern(`${CACHE_PREFIX.SCHEDULES}:*:${scheduleId}`);
   }
 }

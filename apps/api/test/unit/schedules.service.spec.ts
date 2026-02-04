@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SchedulesService } from '../../src/modules/schedules/schedules.service';
 import { DatabaseService } from '../../src/database/database.service';
+import { CacheService } from '../../src/modules/cache/cache.service';
 
 describe('SchedulesService', () => {
   let service: SchedulesService;
@@ -30,6 +31,14 @@ describe('SchedulesService', () => {
     },
   };
 
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    delPattern: jest.fn(),
+    buildKey: jest.fn((...parts) => parts.join(':')),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -39,6 +48,10 @@ describe('SchedulesService', () => {
         {
           provide: DatabaseService,
           useValue: { db: mockDb },
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
         },
       ],
     }).compile();

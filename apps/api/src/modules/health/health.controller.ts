@@ -8,6 +8,7 @@ import {
 } from '@nestjs/terminus';
 import { sql } from 'drizzle-orm';
 import { DatabaseService } from '../../database/database.service';
+import { CacheService } from '../cache/cache.service';
 
 @ApiTags('health')
 @Controller('health')
@@ -16,6 +17,7 @@ export class HealthController {
     private health: HealthCheckService,
     private memory: MemoryHealthIndicator,
     private db: DatabaseService,
+    private cache: CacheService,
   ) {}
 
   @Get()
@@ -45,6 +47,15 @@ export class HealthController {
           };
         }
       },
+      // Check Redis cache connection
+      async () => {
+        const isAvailable = await this.cache.isAvailable();
+        return {
+          redis_cache: {
+            status: isAvailable ? 'up' : 'down',
+          },
+        };
+      },
     ]);
   }
 
@@ -64,11 +75,15 @@ export class HealthController {
       // Check database is accessible
       await this.db.db.execute(sql`SELECT 1`);
 
+      // Check cache (optional, won't fail readiness if unavailable)
+      const cacheAvailable = await this.cache.isAvailable();
+
       return {
         status: 'ready',
         timestamp: new Date().toISOString(),
         checks: {
           database: 'ok',
+          cache: cacheAvailable ? 'ok' : 'degraded',
         },
       };
     } catch (error) {
@@ -81,5 +96,11 @@ export class HealthController {
         error: error.message,
       };
     }
+  }
+
+  @Get('cache/stats')
+  @ApiOperation({ summary: 'Get cache statistics' })
+  async cacheStats() {
+    return this.cache.getStats();
   }
 }

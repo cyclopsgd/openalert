@@ -22,7 +22,7 @@ export class TeamsService {
     const teamSlug = slug || this.generateSlug(createTeamDto.name);
 
     // Check if slug already exists
-    const existing = await this.db.select().from(teams).where(eq(teams.slug, teamSlug)).limit(1);
+    const existing = await this.db.db.select().from(teams).where(eq(teams.slug, teamSlug)).limit(1);
 
     if (existing.length > 0) {
       throw new ConflictException(`Team with slug "${teamSlug}" already exists`);
@@ -41,7 +41,7 @@ export class TeamsService {
   }
 
   async findAll() {
-    const allTeams = await this.db.select().from(teams);
+    const allTeams = await this.db.db.select().from(teams);
 
     // Get member counts for each team
     const teamIds = allTeams.map((t) => t.id);
@@ -82,7 +82,7 @@ export class TeamsService {
   }
 
   async findOne(id: number) {
-    const [team] = await this.db.select().from(teams).where(eq(teams.id, id)).limit(1);
+    const [team] = await this.db.db.select().from(teams).where(eq(teams.id, id)).limit(1);
 
     if (!team) {
       throw new NotFoundException(`Team with ID ${id} not found`);
@@ -94,7 +94,7 @@ export class TeamsService {
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
-        role: teamMembers.role,
+        role: teamMembers.teamRole,
         createdAt: teamMembers.createdAt,
         user: {
           id: users.id,
@@ -109,7 +109,7 @@ export class TeamsService {
       .where(eq(teamMembers.teamId, id));
 
     // Get team services
-    const teamServices = await this.db.select().from(services).where(eq(services.teamId, id));
+    const teamServices = await this.db.db.select().from(services).where(eq(services.teamId, id));
 
     return {
       ...team,
@@ -157,7 +157,7 @@ export class TeamsService {
       );
     }
 
-    await this.db.delete(teams).where(eq(teams.id, id));
+    await this.db.db.delete(teams).where(eq(teams.id, id));
 
     return { deleted: true, team };
   }
@@ -204,7 +204,7 @@ export class TeamsService {
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
-        role: teamMembers.role,
+        role: teamMembers.teamRole,
         createdAt: teamMembers.createdAt,
         user: {
           id: users.id,
@@ -290,7 +290,7 @@ export class TeamsService {
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
-        role: teamMembers.role,
+        role: teamMembers.teamRole,
         createdAt: teamMembers.createdAt,
         user: {
           id: users.id,

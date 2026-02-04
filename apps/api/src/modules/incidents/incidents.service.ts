@@ -11,6 +11,7 @@ import {
   escalationLevels,
 } from '../../database/schema';
 import { EscalationQueueService } from '../../queues/escalation.queue';
+import { CacheService, CACHE_PREFIX, CACHE_TTL } from '../cache/cache.service';
 
 interface CreateIncidentParams {
   serviceId: number;
@@ -27,6 +28,7 @@ export class IncidentsService {
     private readonly eventEmitter: EventEmitter2,
     @Inject(forwardRef(() => EscalationQueueService))
     private readonly escalationQueue: EscalationQueueService,
+    private readonly cacheService: CacheService,
   ) {}
 
   /**
@@ -70,6 +72,9 @@ export class IncidentsService {
 
     this.logger.log(`Created incident #${newIncident.incidentNumber}`);
     this.eventEmitter.emit('incident.created', newIncident);
+
+    // Invalidate incidents cache
+    await this.invalidateIncidentsCache();
 
     // Trigger escalation if service has an escalation policy
     const service = await this.db.query.services.findFirst({
@@ -152,6 +157,10 @@ export class IncidentsService {
     this.logger.log(`Incident #${incident.incidentNumber} acknowledged by user ${userId}`);
     this.eventEmitter.emit('incident.acknowledged', { incident: updated, userId });
 
+    // Invalidate incidents and metrics cache
+    await this.invalidateIncidentsCache();
+    await this.cacheService.delPattern(`${CACHE_PREFIX.METRICS}:*`);
+
     return updated;
   }
 
@@ -198,6 +207,10 @@ export class IncidentsService {
     this.logger.log(`Incident #${incident.incidentNumber} resolved by user ${userId}`);
     this.eventEmitter.emit('incident.resolved', { incident: updated, userId });
 
+    // Invalidate incidents and metrics cache
+    await this.invalidateIncidentsCache();
+    await this.cacheService.delPattern(`${CACHE_PREFIX.METRICS}:*`);
+
     return updated;
   }
 
@@ -239,7 +252,18 @@ export class IncidentsService {
 
       this.logger.log(`Incident #${incident.incidentNumber} auto-resolved`);
       this.eventEmitter.emit('incident.auto_resolved', incident);
+
+      // Invalidate incidents and metrics cache
+      await this.invalidateIncidentsCache();
+      await this.cacheService.delPattern(`${CACHE_PREFIX.METRICS}:*`);
     }
+  }
+
+  /**
+   * Invalidate incidents cache
+   */
+  private async invalidateIncidentsCache(): Promise<void> {
+    await this.cacheService.delPattern(`${CACHE_PREFIX.INCIDENTS}:*`);
   }
 
   /**
@@ -317,6 +341,17 @@ export class IncidentsService {
     limit?: number;
     offset?: number;
   }) {
+    // Try to get from cache
+    const cacheKey = this.cacheService.buildKey(
+      CACHE_PREFIX.INCIDENTS,
+      'list',
+      JSON.stringify(params),
+    );
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const conditions = [];
 
     // Status filter (can be array)
@@ -413,11 +448,17 @@ export class IncidentsService {
       .offset(params.offset || 0)
       .orderBy(orderByClause);
 
+    let result;
     if (conditions.length > 0) {
-      return query.where(and(...conditions));
+      result = await query.where(and(...conditions));
+    } else {
+      result = await query;
     }
 
-    return query;
+    // Cache the result
+    await this.cacheService.set(cacheKey, result, CACHE_TTL.INCIDENTS_LIST);
+
+    return result;
   }
 
   /**
