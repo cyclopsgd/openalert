@@ -25,8 +25,7 @@ export class ServicesService {
     const serviceSlug = slug || this.generateSlug(createServiceDto.name);
 
     // Check if slug already exists
-    const existing = await this.db
-      .select()
+    const existing = await this.db.db.select()
       .from(services)
       .where(eq(services.slug, serviceSlug))
       .limit(1);
@@ -36,8 +35,7 @@ export class ServicesService {
     }
 
     // Verify team exists
-    const team = await this.db
-      .select()
+    const team = await this.db.db.select()
       .from(teams)
       .where(eq(teams.id, serviceData.teamId))
       .limit(1);
@@ -46,8 +44,7 @@ export class ServicesService {
     }
 
     // Create service
-    const [service] = await this.db
-      .insert(services)
+    const [service] = await this.db.db.insert(services)
       .values({
         ...serviceData,
         slug: serviceSlug,
@@ -88,8 +85,7 @@ export class ServicesService {
       return [];
     }
 
-    const incidentCounts = await this.db
-      .select({
+    const incidentCounts = await this.db.db.select({
         serviceId: incidents.serviceId,
         count: sql<number>`count(*)::int`,
       })
@@ -102,11 +98,10 @@ export class ServicesService {
       )
       .groupBy(incidents.serviceId);
 
-    const incidentCountMap = new Map(incidentCounts.map((ic) => [ic.serviceId, ic.count]));
+    const incidentCountMap = new Map(incidentCounts.map((ic: any) => [ic.serviceId, ic.count]));
 
     // Get dependency counts
-    const dependencyCounts = await this.db
-      .select({
+    const dependencyCounts = await this.db.db.select({
         serviceId: serviceDependencies.serviceId,
         count: sql<number>`count(*)::int`,
       })
@@ -114,7 +109,7 @@ export class ServicesService {
       .where(inArray(serviceDependencies.serviceId, serviceIds))
       .groupBy(serviceDependencies.serviceId);
 
-    const dependencyCountMap = new Map(dependencyCounts.map((dc) => [dc.serviceId, dc.count]));
+    const dependencyCountMap = new Map(dependencyCounts.map((dc: any) => [dc.serviceId, dc.count]));
 
     // Combine results
     const result = allServices.map((service) => ({
@@ -137,8 +132,7 @@ export class ServicesService {
     }
 
     // Get dependencies (services this service depends on)
-    const dependencies = await this.db
-      .select({
+    const dependencies = await this.db.db.select({
         id: serviceDependencies.id,
         serviceId: serviceDependencies.serviceId,
         dependsOnServiceId: serviceDependencies.dependsOnServiceId,
@@ -149,8 +143,7 @@ export class ServicesService {
       .where(eq(serviceDependencies.serviceId, id));
 
     // Get dependents (services that depend on this service)
-    const dependents = await this.db
-      .select({
+    const dependents = await this.db.db.select({
         id: serviceDependencies.id,
         serviceId: serviceDependencies.serviceId,
         dependsOnServiceId: serviceDependencies.dependsOnServiceId,
@@ -161,8 +154,7 @@ export class ServicesService {
       .where(eq(serviceDependencies.dependsOnServiceId, id));
 
     // Get active incidents
-    const activeIncidents = await this.db
-      .select()
+    const activeIncidents = await this.db.db.select()
       .from(incidents)
       .where(
         and(
@@ -174,11 +166,11 @@ export class ServicesService {
 
     return {
       ...service,
-      dependencies: dependencies.map((d) => ({
+      dependencies: dependencies.map((d: any) => ({
         id: d.id,
         service: d.dependsOnService,
       })),
-      dependents: dependents.map((d) => ({
+      dependents: dependents.map((d: any) => ({
         id: d.id,
         service: d.dependentService,
       })),
@@ -194,8 +186,7 @@ export class ServicesService {
 
     // If slug is being updated, check for conflicts
     if (updateData.slug && updateData.slug !== existing.slug) {
-      const conflict = await this.db
-        .select()
+      const conflict = await this.db.db.select()
         .from(services)
         .where(eq(services.slug, updateData.slug))
         .limit(1);
@@ -207,8 +198,7 @@ export class ServicesService {
 
     // Update service
     if (Object.keys(updateData).length > 0) {
-      await this.db
-        .update(services)
+      await this.db.db.update(services)
         .set({
           ...updateData,
           updatedAt: new Date(),
@@ -262,8 +252,7 @@ export class ServicesService {
     }
 
     // Check if dependency already exists
-    const existing = await this.db
-      .select()
+    const existing = await this.db.db.select()
       .from(serviceDependencies)
       .where(
         and(
@@ -287,8 +276,7 @@ export class ServicesService {
     }
 
     // Add dependency
-    const [dependency] = await this.db
-      .insert(serviceDependencies)
+    const [dependency] = await this.db.db.insert(serviceDependencies)
       .values({
         serviceId,
         dependsOnServiceId,
@@ -299,8 +287,7 @@ export class ServicesService {
   }
 
   async removeDependency(serviceId: number, dependencyId: number) {
-    const [dependency] = await this.db
-      .select()
+    const [dependency] = await this.db.db.select()
       .from(serviceDependencies)
       .where(
         and(eq(serviceDependencies.serviceId, serviceId), eq(serviceDependencies.id, dependencyId)),
@@ -366,7 +353,7 @@ export class ServicesService {
         highIncidents,
         dependencyIssues,
       },
-      dependencies: service.dependencies.map((d) => ({
+      dependencies: service.dependencies.map((d: any) => ({
         id: d.service.id,
         name: d.service.name,
         status: d.service.status,
@@ -395,8 +382,7 @@ export class ServicesService {
 
     visited.add(serviceId);
 
-    const [service] = await this.db
-      .select()
+    const [service] = await this.db.db.select()
       .from(services)
       .where(eq(services.id, serviceId))
       .limit(1);
@@ -405,8 +391,7 @@ export class ServicesService {
       return null;
     }
 
-    const dependencies = await this.db
-      .select({
+    const dependencies = await this.db.db.select({
         id: serviceDependencies.id,
         serviceId: serviceDependencies.serviceId,
         dependsOnServiceId: serviceDependencies.dependsOnServiceId,
@@ -415,7 +400,7 @@ export class ServicesService {
       .where(eq(serviceDependencies.serviceId, serviceId));
 
     const dependencyNodes = await Promise.all(
-      dependencies.map((dep) =>
+      dependencies.map((dep: any) =>
         this.buildDependencyGraph(dep.dependsOnServiceId, new Set(visited)),
       ),
     );
@@ -424,14 +409,13 @@ export class ServicesService {
       id: service.id,
       name: service.name,
       status: service.status,
-      dependencies: dependencyNodes.filter((n) => n !== null),
+      dependencies: dependencyNodes.filter((n: any) => n !== null),
     };
   }
 
   private async addDependencies(serviceId: number, dependencyIds: number[]) {
     // Verify all dependency services exist
-    const dependencyServices = await this.db
-      .select()
+    const dependencyServices = await this.db.db.select()
       .from(services)
       .where(inArray(services.id, dependencyIds));
 
@@ -485,12 +469,11 @@ export class ServicesService {
       visited.add(currentId);
 
       // Get all dependencies of current service
-      const deps = await this.db
-        .select()
+      const deps = await this.db.db.select()
         .from(serviceDependencies)
         .where(eq(serviceDependencies.serviceId, currentId));
 
-      queue.push(...deps.map((d) => d.dependsOnServiceId));
+      queue.push(...deps.map((d: any) => d.dependsOnServiceId));
     }
 
     return false;

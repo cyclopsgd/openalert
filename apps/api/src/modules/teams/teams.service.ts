@@ -29,8 +29,7 @@ export class TeamsService {
     }
 
     // Create team
-    const [team] = await this.db
-      .insert(teams)
+    const [team] = await this.db.db.insert(teams)
       .values({
         ...teamData,
         slug: teamSlug,
@@ -50,8 +49,7 @@ export class TeamsService {
       return [];
     }
 
-    const memberCounts = await this.db
-      .select({
+    const memberCounts = await this.db.db.select({
         teamId: teamMembers.teamId,
         count: sql<number>`count(*)::int`,
       })
@@ -59,11 +57,10 @@ export class TeamsService {
       .where(sql`${teamMembers.teamId} IN ${teamIds}`)
       .groupBy(teamMembers.teamId);
 
-    const memberCountMap = new Map(memberCounts.map((mc) => [mc.teamId, mc.count]));
+    const memberCountMap = new Map(memberCounts.map((mc: any) => [mc.teamId, mc.count]));
 
     // Get service counts for each team
-    const serviceCounts = await this.db
-      .select({
+    const serviceCounts = await this.db.db.select({
         teamId: services.teamId,
         count: sql<number>`count(*)::int`,
       })
@@ -71,7 +68,7 @@ export class TeamsService {
       .where(sql`${services.teamId} IN ${teamIds}`)
       .groupBy(services.teamId);
 
-    const serviceCountMap = new Map(serviceCounts.map((sc) => [sc.teamId, sc.count]));
+    const serviceCountMap = new Map(serviceCounts.map((sc: any) => [sc.teamId, sc.count]));
 
     // Combine results
     return allTeams.map((team) => ({
@@ -89,8 +86,7 @@ export class TeamsService {
     }
 
     // Get team members with user details
-    const members = await this.db
-      .select({
+    const members = await this.db.db.select({
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
@@ -124,8 +120,7 @@ export class TeamsService {
 
     // If slug is being updated, check for conflicts
     if (updateTeamDto.slug && updateTeamDto.slug !== existing.slug) {
-      const conflict = await this.db
-        .select()
+      const conflict = await this.db.db.select()
         .from(teams)
         .where(eq(teams.slug, updateTeamDto.slug))
         .limit(1);
@@ -136,8 +131,7 @@ export class TeamsService {
     }
 
     // Update team
-    await this.db
-      .update(teams)
+    await this.db.db.update(teams)
       .set({
         ...updateTeamDto,
         updatedAt: new Date(),
@@ -167,8 +161,7 @@ export class TeamsService {
     await this.findOne(teamId);
 
     // Verify user exists
-    const [user] = await this.db
-      .select()
+    const [user] = await this.db.db.select()
       .from(users)
       .where(eq(users.id, addMemberDto.userId))
       .limit(1);
@@ -178,8 +171,7 @@ export class TeamsService {
     }
 
     // Check if user is already a member
-    const existing = await this.db
-      .select()
+    const existing = await this.db.db.select()
       .from(teamMembers)
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, addMemberDto.userId)))
       .limit(1);
@@ -189,8 +181,7 @@ export class TeamsService {
     }
 
     // Add member
-    const [member] = await this.db
-      .insert(teamMembers)
+    const [member] = await this.db.db.insert(teamMembers)
       .values({
         teamId,
         userId: addMemberDto.userId,
@@ -199,8 +190,7 @@ export class TeamsService {
       .returning();
 
     // Return member with user details
-    const [memberWithUser] = await this.db
-      .select({
+    const [memberWithUser] = await this.db.db.select({
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
@@ -227,8 +217,7 @@ export class TeamsService {
     await this.findOne(teamId);
 
     // Find member
-    const [member] = await this.db
-      .select()
+    const [member] = await this.db.db.select()
       .from(teamMembers)
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)))
       .limit(1);
@@ -239,15 +228,14 @@ export class TeamsService {
 
     // Check if this is the last admin
     const teamData = await this.findOne(teamId);
-    const adminCount = teamData.members.filter((m) => m.role === 'team_admin').length;
+    const adminCount = teamData.members.filter((m: any) => m.role === 'team_admin').length;
 
     if (member.role === 'team_admin' && adminCount <= 1) {
       throw new BadRequestException('Cannot remove the last admin from the team');
     }
 
     // Remove member
-    await this.db
-      .delete(teamMembers)
+    await this.db.db.delete(teamMembers)
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
     return { deleted: true, member };
@@ -258,8 +246,7 @@ export class TeamsService {
     await this.findOne(teamId);
 
     // Find member
-    const [member] = await this.db
-      .select()
+    const [member] = await this.db.db.select()
       .from(teamMembers)
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)))
       .limit(1);
@@ -271,7 +258,7 @@ export class TeamsService {
     // If demoting from admin, check if this is the last admin
     if (member.role === 'team_admin' && role !== 'team_admin') {
       const teamData = await this.findOne(teamId);
-      const adminCount = teamData.members.filter((m) => m.role === 'team_admin').length;
+      const adminCount = teamData.members.filter((m: any) => m.role === 'team_admin').length;
 
       if (adminCount <= 1) {
         throw new BadRequestException('Cannot demote the last admin of the team');
@@ -279,14 +266,12 @@ export class TeamsService {
     }
 
     // Update role
-    await this.db
-      .update(teamMembers)
+    await this.db.db.update(teamMembers)
       .set({ role })
       .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
     // Return updated member with user details
-    const [updatedMember] = await this.db
-      .select({
+    const [updatedMember] = await this.db.db.select({
         id: teamMembers.id,
         teamId: teamMembers.teamId,
         userId: teamMembers.userId,
